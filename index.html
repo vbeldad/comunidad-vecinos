@@ -383,9 +383,57 @@
                     });
                     c.estado = 'pagada';
                     c.idPago = idPago;
+                    
+                    // ✨ AGREGAR COMO INGRESO EN GASTOS
+                    const vecino = this.data.vecinos.find(v => v.id === c.vecinoId);
+                    this.data.gastos.push({
+                        id: Date.now() + Math.random(),
+                        fecha: fecha,
+                        concepto: `Pago cuota - ${vecino ? vecino.nombre : 'N/A'} (${c.concepto})`,
+                        tipo: 'ingreso',
+                        importe: c.importe
+                    });
+                    
+                    // ✨ GENERAR CUOTA DEL SIGUIENTE MES
+                    this.generarCuotaSiguienteMes(c);
+                    
                     this.saveData();
                     this.renderCuotas();
-                    alert('✓ Pago registrado');
+                    this.renderGastos();
+                    this.updateDashboard();
+                    alert('✓ Pago registrado\n✓ Ingreso agregado\n✓ Cuota del siguiente mes creada');
+                }
+            },
+            
+            generarCuotaSiguienteMes(cuotaActual) {
+                const [año, mes] = cuotaActual.mes.split('-');
+                let mesNum = parseInt(mes);
+                let añoNum = parseInt(año);
+                
+                mesNum++;
+                if (mesNum > 12) {
+                    mesNum = 1;
+                    añoNum++;
+                }
+                
+                const siguienteMes = `${añoNum}-${String(mesNum).padStart(2, '0')}`;
+                
+                // Verificar que no exista ya
+                const existe = this.data.cuotas.some(c => 
+                    c.vecinoId === cuotaActual.vecinoId && 
+                    c.mes === siguienteMes && 
+                    c.concepto === cuotaActual.concepto
+                );
+                
+                if (!existe) {
+                    this.data.cuotas.push({
+                        id: Date.now() + Math.random(),
+                        vecinoId: cuotaActual.vecinoId,
+                        mes: siguienteMes,
+                        importe: cuotaActual.importe,
+                        concepto: cuotaActual.concepto,
+                        estado: 'pendiente'
+                    });
                 }
             },
             
