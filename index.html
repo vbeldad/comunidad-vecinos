@@ -1234,7 +1234,13 @@
                     cuotasPendientes.map(c => `<option value="${c.id}">${c.mes} - ${c.concepto} (€${c.importe.toFixed(2)})</option>`).join('');
             },
             
-            registrarPago() {
+            convertirFechaFormato(fechaISO) {
+                // Convierte YYYY-MM-DD a dd/mm/yyyy
+                if (!fechaISO) return '';
+                const [año, mes, día] = fechaISO.split('-');
+                return `${día}/${mes}/${año}`;
+            },
+            
                 const vecinoId = document.getElementById('pagoVecino').value.trim();
                 const cuotaId = parseFloat(document.getElementById('pagoCuota').value);
                 const fechaPago = document.getElementById('pagoFecha').value.trim();
@@ -1290,7 +1296,7 @@
                 const vecino = this.data.vecinos.find(v => v.id == vecinoId);
                 this.data.gastos.push({
                     id: Date.now() + Math.random(),
-                    fecha: fechaPago,
+                    fecha: this.convertirFechaFormato(fechaPago),  // Convertir formato
                     concepto: `Pago cuota - ${vecino ? vecino.nombre : 'N/A'} (${cuota.concepto})`,
                     categoria: 'Cuota',
                     tipo: 'ingreso',
