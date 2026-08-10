@@ -68,9 +68,9 @@
             <div class="stat">👥 Vecinos: <strong id="totalVecinos">0</strong></div>
             <div class="stat">💳 Cuotas pagadas: <strong id="totalCuotasPagadas">0</strong></div>
             <div class="stat">⏳ Cuotas pendientes: <strong id="totalCuotasPendientes">0</strong></div>
-            <div class="stat">💰 Total recaudado: <strong id="totalRecaudado" style="color: #28a745;">€0.00</strong></div>
-            <div class="stat">📉 Total gastado: <strong id="totalGastado" style="color: #dc3545;">€0.00</strong></div>
-            <div class="stat" style="background: #e8f4f8; border: 2px solid #667eea;">📊 Saldo: <strong id="saldo" style="font-size: 18px;">€0.00</strong></div>
+            <div class="stat">💰 Total recaudado: <strong id="totalRecaudado" style="color: #28a745;">0.00€</strong></div>
+            <div class="stat">📉 Total gastado: <strong id="totalGastado" style="color: #dc3545;">0.00€</strong></div>
+            <div class="stat" style="background: #e8f4f8; border: 2px solid #667eea;">📊 Saldo: <strong id="saldo" style="font-size: 18px;">0.00€</strong></div>
         </div>
 
         <!-- VECINOS -->
@@ -275,9 +275,9 @@
                 
                 document.getElementById('totalCuotasPagadas').textContent = pagadas;
                 document.getElementById('totalCuotasPendientes').textContent = pendientes;
-                document.getElementById('totalRecaudado').textContent = '€' + totalIngresos.toFixed(2);
-                document.getElementById('totalGastado').textContent = '€' + totalGastado.toFixed(2);
-                document.getElementById('saldo').textContent = '€' + saldo.toFixed(2);
+                document.getElementById('totalRecaudado').textContent = totalIngresos.toFixed(2) + '€';
+                document.getElementById('totalGastado').textContent = totalGastado.toFixed(2) + '€';
+                document.getElementById('saldo').textContent = saldo.toFixed(2) + '€';
                 
                 // Cambiar color del saldo según sea positivo o negativo
                 const saldoDiv = document.getElementById('saldo');
@@ -427,7 +427,7 @@
                         <tr>
                             <td>${v ? v.nombre : 'N/A'}</td>
                             <td>${c.mes}</td>
-                            <td>€${c.importe.toFixed(2)}</td>
+                            <td>${c.importe.toFixed(2)}€</td>
                             <td><span style="background: ${c.estado === 'pagada' ? '#d4edda' : '#fff3cd'}; padding: 3px 8px; border-radius: 3px;">${c.estado}</span></td>
                             <td>
                                 <button class="btn-small" onclick="app.editarCuotaDesdeTabla(${c.id})">✏️ Editar</button>
@@ -604,7 +604,7 @@
         <div class="total">
             <div class="total-line">
                 <span>Importe pagado:</span>
-                <span class="total-amount">€${importe.toFixed(2)}</span>
+                <span class="total-amount">${importe.toFixed(2)}€</span>
             </div>
         </div>
         
@@ -702,7 +702,7 @@
                         <td>${g.fecha}</td>
                         <td>${g.concepto}</td>
                         <td style="color: ${g.tipo === 'gasto' ? '#dc3545' : '#28a745'}; font-weight: bold;">${g.tipo}</td>
-                        <td style="color: ${g.tipo === 'gasto' ? '#dc3545' : '#28a745'}; font-weight: bold;">€${g.importe.toFixed(2)}</td>
+                        <td style="color: ${g.tipo === 'gasto' ? '#dc3545' : '#28a745'}; font-weight: bold;">${g.importe.toFixed(2)}€</td>
                         <td>
                             <button class="btn-small" onclick="app.editarGasto(${g.id})">✏️ Editar</button>
                             <button class="btn-small btn-delete" onclick="app.deleteGasto(${g.id})">🗑️ Eliminar</button>
