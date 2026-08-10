@@ -102,7 +102,6 @@
         <!-- CUOTAS -->
         <div id="cuotas" class="section card">
             <h2>Cuotas</h2>
-            <input type="hidden" id="cuotaEditandoId">
             <div class="form-group">
                 <label>Mes (YYYY-MM)</label>
                 <input type="text" id="cuotaMes" placeholder="2026-01">
@@ -116,7 +115,6 @@
                 <input type="text" id="cuotaConcepto" placeholder="Cuota de comunidad">
             </div>
             <button onclick="app.crearOEditarCuota()" style="width: 100%; margin-bottom: 20px;" id="btnCuota">Crear para todos</button>
-            <button onclick="app.cancelarEditarCuota()" style="width: 100%; margin-bottom: 20px; background: #999; display: none;" id="btnCancelCuota">Cancelar edición</button>
             <table>
                 <thead><tr><th>Vecino</th><th>Mes</th><th>Importe</th><th>Estado</th><th>Acciones</th></tr></thead>
                 <tbody id="cuotasList"></tbody>
@@ -362,7 +360,6 @@
             },
             
             crearOEditarCuota() {
-                const cuotaEditandoId = document.getElementById('cuotaEditandoId').value;
                 const mes = document.getElementById('cuotaMes').value.trim();
                 const importeStr = document.getElementById('cuotaImporte').value.trim().replace(',', '.');
                 const importe = parseFloat(importeStr);
@@ -383,44 +380,27 @@
                     return;
                 }
                 
-                if (cuotaEditandoId) {
-                    // EDITANDO
-                    const c = this.data.cuotas.find(x => x.id === parseInt(cuotaEditandoId) || x.id === cuotaEditandoId);
-                    if (!c) {
-                        alert('Cuota no encontrada');
-                        return;
-                    }
-                    c.mes = mes;
-                    c.importe = importe;
-                    c.concepto = concepto;
-                    this.saveData();
-                    this.renderCuotas();
-                    this.updateDashboard();
-                    this.cancelarEditarCuota();
-                    alert('✓ Cuota editada');
-                } else {
-                    // CREANDO PARA TODOS
-                    if (this.data.vecinos.length === 0) {
-                        alert('Agrega vecinos primero');
-                        return;
-                    }
-                    this.data.vecinos.forEach(v => {
-                        this.data.cuotas.push({
-                            id: Date.now() + Math.random(),
-                            vecinoId: v.id,
-                            mes, importe, concepto,
-                            estado: 'pendiente'
-                        });
-                    });
-                    
-                    this.saveData();
-                    document.getElementById('cuotaMes').value = '';
-                    document.getElementById('cuotaImporte').value = '';
-                    document.getElementById('cuotaConcepto').value = '';
-                    this.renderCuotas();
-                    this.updateDashboard();
-                    alert('✓ Cuotas creadas para todos los vecinos');
+                if (this.data.vecinos.length === 0) {
+                    alert('Agrega vecinos primero');
+                    return;
                 }
+                
+                this.data.vecinos.forEach(v => {
+                    this.data.cuotas.push({
+                        id: Date.now() + Math.random(),
+                        vecinoId: v.id,
+                        mes, importe, concepto,
+                        estado: 'pendiente'
+                    });
+                });
+                
+                this.saveData();
+                document.getElementById('cuotaMes').value = '';
+                document.getElementById('cuotaImporte').value = '';
+                document.getElementById('cuotaConcepto').value = '';
+                this.renderCuotas();
+                this.updateDashboard();
+                alert('✓ Cuotas creadas para todos los vecinos');
             },
             
             cancelarEditarCuota() {
@@ -438,14 +418,42 @@
                     alert('Cuota no encontrada');
                     return;
                 }
-                document.getElementById('cuotaEditandoId').value = id;
-                document.getElementById('cuotaMes').value = c.mes;
-                document.getElementById('cuotaImporte').value = c.importe.toString();
-                document.getElementById('cuotaConcepto').value = c.concepto;
-                document.getElementById('btnCuota').textContent = '💾 Guardar cambios';
-                document.getElementById('btnCancelCuota').style.display = 'block';
-                // Scroll al formulario
-                document.getElementById('cuotaMes').scrollIntoView({behavior: 'smooth'});
+                
+                const nuevoMes = prompt('Mes (YYYY-MM):', c.mes);
+                if (nuevoMes === null) return;
+                
+                const nuevoImporte = prompt('Importe (€):', c.importe);
+                if (nuevoImporte === null) return;
+                
+                const nuevoConcepto = prompt('Concepto:', c.concepto);
+                if (nuevoConcepto === null) return;
+                
+                // Validar
+                if (!nuevoMes.trim() || !nuevoConcepto.trim()) {
+                    alert('Campos incompletos');
+                    return;
+                }
+                
+                if (!/^\d{4}-\d{2}$/.test(nuevoMes)) {
+                    alert('Formato de mes incorrecto (debe ser YYYY-MM)');
+                    return;
+                }
+                
+                const importeNum = parseFloat(nuevoImporte.replace(',', '.'));
+                if (isNaN(importeNum) || importeNum <= 0) {
+                    alert('Importe inválido');
+                    return;
+                }
+                
+                // Guardar cambios
+                c.mes = nuevoMes;
+                c.importe = importeNum;
+                c.concepto = nuevoConcepto.trim();
+                
+                this.saveData();
+                this.renderCuotas();
+                this.updateDashboard();
+                alert('✓ Cuota editada');
             },
             
             renderCuotas() {
