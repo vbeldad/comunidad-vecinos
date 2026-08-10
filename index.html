@@ -127,10 +127,6 @@
         <div id="gastos" class="section card">
             <h2>Gastos/Ingresos</h2>
             <div class="form-group">
-                <label>Saldo Inicial (€)</label>
-                <input type="text" id="saldoInicial" placeholder="0" onchange="app.saveData(); app.renderGastos();">
-            </div>
-            <div class="form-group">
                 <label>Fecha (dd/mm/yyyy)</label>
                 <input type="text" id="gastoFecha" placeholder="01/01/2026">
             </div>
@@ -160,6 +156,10 @@
         <div id="config" class="section card">
             <h2>Configuración</h2>
             <div class="form-group">
+                <label>Saldo Inicial (€) - Dinero disponible al inicio</label>
+                <input type="text" id="configSaldoInicial" placeholder="0">
+            </div>
+            <div class="form-group">
                 <label>Nueva Contraseña</label>
                 <input type="password" id="newPassword" placeholder="Dejar en blanco para no cambiar">
             </div>
@@ -167,7 +167,7 @@
                 <label>Confirmar Contraseña</label>
                 <input type="password" id="confirmPassword" placeholder="Confirma">
             </div>
-            <button onclick="app.saveConfig()">Guardar Contraseña</button>
+            <button onclick="app.saveConfig()">Guardar Configuración</button>
             <button onclick="app.exportData()" style="background: #17a2b8; margin-left: 10px;">Descargar Backup</button>
             <button onclick="app.clearAll()" style="background: #dc3545; margin-left: 10px;">Borrar Todo</button>
         </div>
@@ -240,7 +240,6 @@
                 document.getElementById('loginScreen').classList.add('hidden');
                 document.getElementById('appScreen').classList.remove('hidden');
                 document.getElementById('passwordInput').value = '';
-                document.getElementById('saldoInicial').value = (this.data.saldoInicial || 0).toFixed(2);
                 this.updateDashboard();
                 this.renderVecinos();
                 this.renderCuotas();
@@ -260,9 +259,9 @@
                 if (name === 'dashboard') this.updateDashboard();
                 if (name === 'vecinos') this.renderVecinos();
                 if (name === 'cuotas') this.renderCuotas();
-                if (name === 'gastos') {
-                    document.getElementById('saldoInicial').value = (this.data.saldoInicial || 0).toFixed(2);
-                    this.renderGastos();
+                if (name === 'gastos') this.renderGastos();
+                if (name === 'config') {
+                    document.getElementById('configSaldoInicial').value = (this.data.saldoInicial || 0).toFixed(2);
                 }
             },
             
@@ -715,9 +714,7 @@
             },
             
             renderGastos() {
-                // Cargar saldo inicial
-                const saldoInicial = parseFloat(document.getElementById('saldoInicial').value.replace(',', '.')) || this.data.saldoInicial || 0;
-                this.data.saldoInicial = saldoInicial;
+                const saldoInicial = this.data.saldoInicial || 0;
                 
                 const list = document.getElementById('gastosList');
                 // Ordenar por fecha (más antiguas primero para calcular saldo acumulado)
@@ -779,24 +776,36 @@
             },
             
             saveConfig() {
+                const saldoInicial = parseFloat(document.getElementById('configSaldoInicial').value.replace(',', '.'));
                 const pwd = document.getElementById('newPassword').value;
                 const pwd2 = document.getElementById('confirmPassword').value;
                 
-                if (!pwd) {
-                    alert('Ingresa contraseña');
+                if (isNaN(saldoInicial)) {
+                    alert('Saldo Inicial inválido');
                     return;
                 }
                 
-                if (pwd !== pwd2) {
-                    alert('No coinciden');
-                    return;
+                this.data.saldoInicial = saldoInicial;
+                
+                if (pwd || pwd2) {
+                    if (!pwd) {
+                        alert('Ingresa contraseña');
+                        return;
+                    }
+                    
+                    if (pwd !== pwd2) {
+                        alert('No coinciden');
+                        return;
+                    }
+                    
+                    this.data.password = btoa(pwd);
+                    document.getElementById('newPassword').value = '';
+                    document.getElementById('confirmPassword').value = '';
                 }
                 
-                this.data.password = btoa(pwd);
                 this.saveData();
-                document.getElementById('newPassword').value = '';
-                document.getElementById('confirmPassword').value = '';
-                alert('✓ Guardado');
+                this.renderGastos();
+                alert('✓ Configuración guardada');
             },
             
             exportData() {
