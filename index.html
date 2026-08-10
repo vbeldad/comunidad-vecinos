@@ -1017,24 +1017,15 @@
                         <tbody>
                             ${vecinos.map(v => `
                                 <tr>
-                                    <td onclick="app.editarVecino(${v.id})" style="cursor: pointer; color: #667eea;">
-                                        ${v.nombre} ✏️
-                                    </td>
-                                    <td onclick="app.editarPisoVecino(${v.id})" style="cursor: pointer; color: #667eea;">
-                                        ${v.piso} ✏️
-                                    </td>
-                                    <td onclick="app.editarTelefonoVecino(${v.id})" style="cursor: pointer; color: #667eea;">
-                                        ${v.telefono || '-'} ✏️
-                                    </td>
-                                    <td onclick="app.editarEmailVecino(${v.id})" style="cursor: pointer; color: #667eea;">
-                                        ${v.email || '-'} ✏️
-                                    </td>
-                                    <td onclick="app.editarNotasVecino(${v.id})" style="cursor: pointer; color: #667eea;">
-                                        ${v.notas || '-'} ✏️
-                                    </td>
+                                    <td>${v.nombre}</td>
+                                    <td>${v.piso}</td>
+                                    <td>${v.telefono || '-'}</td>
+                                    <td>${v.email || '-'}</td>
+                                    <td>${v.notas || '-'}</td>
                                     <td>${v.fecha}</td>
                                     ${!this.publicViewOnly ? `
                                         <td>
+                                            <button class="btn-small" onclick="app.abrirDialogoEditarVecino(${v.id})">✏️ Editar</button>
                                             <button class="btn-small delete" onclick="app.deleteVecino(${v.id})">Eliminar</button>
                                         </td>
                                     ` : ''}
@@ -1053,64 +1044,75 @@
                 }
             },
             
-            editarVecino(id) {
+            abrirDialogoEditarVecino(id) {
                 const vecino = this.data.vecinos.find(v => v.id === id);
                 if (!vecino) return;
                 
-                const nuevoNombre = prompt('Nombre:', vecino.nombre);
-                if (nuevoNombre !== null && nuevoNombre.trim()) {
-                    vecino.nombre = nuevoNombre.trim();
-                    this.saveData();
-                    this.renderVecinos();
-                }
+                const html = `
+                    <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000;">
+                        <div style="background: white; padding: 25px; border-radius: 8px; max-width: 400px; width: 90%; box-shadow: 0 4px 20px rgba(0,0,0,0.2);">
+                            <h2 style="margin-top: 0;">Editar vecino</h2>
+                            <div style="display: flex; flex-direction: column; gap: 12px;">
+                                <div>
+                                    <label style="font-weight: bold; display: block; margin-bottom: 5px;">Nombre</label>
+                                    <input type="text" id="editNombre" value="${vecino.nombre}" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;">
+                                </div>
+                                <div>
+                                    <label style="font-weight: bold; display: block; margin-bottom: 5px;">Piso</label>
+                                    <input type="text" id="editPiso" value="${vecino.piso}" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;">
+                                </div>
+                                <div>
+                                    <label style="font-weight: bold; display: block; margin-bottom: 5px;">Teléfono</label>
+                                    <input type="text" id="editTelefono" value="${vecino.telefono || ''}" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;">
+                                </div>
+                                <div>
+                                    <label style="font-weight: bold; display: block; margin-bottom: 5px;">Email</label>
+                                    <input type="email" id="editEmail" value="${vecino.email || ''}" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;">
+                                </div>
+                                <div>
+                                    <label style="font-weight: bold; display: block; margin-bottom: 5px;">Notas</label>
+                                    <textarea id="editNotas" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; min-height: 60px;">${vecino.notas || ''}</textarea>
+                                </div>
+                                <div>
+                                    <label style="font-weight: bold; display: block; margin-bottom: 5px;">Fecha de alta (dd/mm/yyyy)</label>
+                                    <input type="text" id="editFecha" value="${vecino.fecha}" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;">
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                                <button onclick="app.guardarVecino(${id})" style="flex: 1; padding: 10px; background: #667eea; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Guardar</button>
+                                <button onclick="app.cerrarDialogo()" style="flex: 1; padding: 10px; background: #ccc; color: black; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Cancelar</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.insertAdjacentHTML('beforeend', html);
             },
             
-            editarPisoVecino(id) {
+            guardarVecino(id) {
                 const vecino = this.data.vecinos.find(v => v.id === id);
                 if (!vecino) return;
                 
-                const nuevoPiso = prompt('Piso:', vecino.piso);
-                if (nuevoPiso !== null && nuevoPiso.trim()) {
-                    vecino.piso = nuevoPiso.trim();
-                    this.saveData();
-                    this.renderVecinos();
+                vecino.nombre = document.getElementById('editNombre').value.trim();
+                vecino.piso = document.getElementById('editPiso').value.trim();
+                vecino.telefono = document.getElementById('editTelefono').value.trim();
+                vecino.email = document.getElementById('editEmail').value.trim();
+                vecino.notas = document.getElementById('editNotas').value.trim();
+                vecino.fecha = document.getElementById('editFecha').value.trim();
+                
+                if (!vecino.nombre || !vecino.piso) {
+                    alert('Nombre y Piso son obligatorios');
+                    return;
                 }
+                
+                this.saveData();
+                this.renderVecinos();
+                this.cerrarDialogo();
             },
             
-            editarTelefonoVecino(id) {
-                const vecino = this.data.vecinos.find(v => v.id === id);
-                if (!vecino) return;
-                
-                const nuevoTel = prompt('Teléfono:', vecino.telefono || '');
-                if (nuevoTel !== null) {
-                    vecino.telefono = nuevoTel.trim();
-                    this.saveData();
-                    this.renderVecinos();
-                }
-            },
-            
-            editarEmailVecino(id) {
-                const vecino = this.data.vecinos.find(v => v.id === id);
-                if (!vecino) return;
-                
-                const nuevoEmail = prompt('Email:', vecino.email || '');
-                if (nuevoEmail !== null) {
-                    vecino.email = nuevoEmail.trim();
-                    this.saveData();
-                    this.renderVecinos();
-                }
-            },
-            
-            editarNotasVecino(id) {
-                const vecino = this.data.vecinos.find(v => v.id === id);
-                if (!vecino) return;
-                
-                const nuevasNotas = prompt('Notas:', vecino.notas || '');
-                if (nuevasNotas !== null) {
-                    vecino.notas = nuevasNotas.trim();
-                    this.saveData();
-                    this.renderVecinos();
-                }
+            cerrarDialogo() {
+                const dialogo = document.querySelector('[style*="position: fixed"]');
+                if (dialogo) dialogo.remove();
             },
             
             setupBuscadorVecinos() {
@@ -1414,7 +1416,7 @@
                                                 <td style="padding: 8px; text-align: center;">
                                                     ${c.estado === 'pagada' && pago ? `
                                                         <button class="btn-small" onclick="app.mostrarRecibo(${c.idPago})" style="font-size: 11px;">📄 Recibo</button>
-                                                        <button class="btn-small" onclick="app.editarPago(${c.id})" style="font-size: 11px;">✏️ Editar</button>
+                                                        <button class="btn-small" onclick="app.abrirDialogoEditarPago(${c.id})" style="font-size: 11px;">✏️ Editar</button>
                                                     ` : ''}
                                                     ${!this.publicViewOnly && c.estado === 'pagada' ? `
                                                         <button class="btn-small delete" onclick="app.anularPago(${c.id})" style="font-size: 11px;">Anular</button>
@@ -1514,28 +1516,61 @@
                 }
             },
             
-            editarPago(cuotaId) {
+            abrirDialogoEditarPago(cuotaId) {
                 const cuota = this.data.cuotas.find(c => c.id === cuotaId);
                 const pago = this.data.pagos.find(p => p.id === cuota.idPago);
                 
                 if (!pago) return;
                 
-                const nuevoImporte = prompt('Nuevo importe pagado (€):', pago.importe.toString());
-                if (nuevoImporte !== null) {
-                    const importe = parseFloat(nuevoImporte.replace(',', '.'));
-                    if (!isNaN(importe) && importe > 0) {
-                        pago.importe = importe;
-                        
-                        const nuevaFecha = prompt('Nueva fecha (yyyy-mm-dd):', pago.fechaPago);
-                        if (nuevaFecha !== null && nuevaFecha.trim()) {
-                            pago.fechaPago = nuevaFecha.trim();
-                            this.saveData();
-                            this.renderReporteCuotas();
-                        }
-                    } else {
-                        alert('Importe inválido');
-                    }
+                const html = `
+                    <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000;">
+                        <div style="background: white; padding: 25px; border-radius: 8px; max-width: 400px; width: 90%; box-shadow: 0 4px 20px rgba(0,0,0,0.2);">
+                            <h2 style="margin-top: 0;">Editar pago</h2>
+                            <div style="display: flex; flex-direction: column; gap: 12px;">
+                                <div>
+                                    <label style="font-weight: bold; display: block; margin-bottom: 5px;">Fecha de pago (yyyy-mm-dd)</label>
+                                    <input type="text" id="editFechaPago" value="${pago.fechaPago}" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;">
+                                </div>
+                                <div>
+                                    <label style="font-weight: bold; display: block; margin-bottom: 5px;">Importe pagado (€)</label>
+                                    <input type="text" id="editImportePago" value="${pago.importe.toFixed(2)}" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;">
+                                </div>
+                                <div>
+                                    <label style="font-weight: bold; display: block; margin-bottom: 5px;">Referencia (opcional)</label>
+                                    <input type="text" id="editReferenciaPago" value="${pago.referencia || ''}" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;">
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                                <button onclick="app.guardarPago(${cuotaId})" style="flex: 1; padding: 10px; background: #667eea; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Guardar</button>
+                                <button onclick="app.cerrarDialogo()" style="flex: 1; padding: 10px; background: #ccc; color: black; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Cancelar</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.insertAdjacentHTML('beforeend', html);
+            },
+            
+            guardarPago(cuotaId) {
+                const cuota = this.data.cuotas.find(c => c.id === cuotaId);
+                const pago = this.data.pagos.find(p => p.id === cuota.idPago);
+                
+                if (!pago) return;
+                
+                pago.fechaPago = document.getElementById('editFechaPago').value.trim();
+                pago.referencia = document.getElementById('editReferenciaPago').value.trim();
+                
+                const importe = parseFloat(document.getElementById('editImportePago').value.replace(',', '.'));
+                
+                if (isNaN(importe) || importe <= 0) {
+                    alert('Importe inválido');
+                    return;
                 }
+                
+                pago.importe = importe;
+                this.saveData();
+                this.renderReporteCuotas();
+                this.cerrarDialogo();
             },
             
             // ANUNCIOS
@@ -1662,12 +1697,12 @@
                         <tbody>
                             ${this.data.gastos.map(g => `
                                 <tr>
-                                    <td onclick="app.editarFechaGasto(${g.id})" style="cursor: pointer; color: #667eea;">${g.fecha} ✏️</td>
-                                    <td onclick="app.editarGasto(${g.id})" style="cursor: pointer; color: #667eea;">${g.concepto} ✏️</td>
+                                    <td>${g.fecha}</td>
+                                    <td>${g.concepto}</td>
                                     <td>${g.categoria}</td>
                                     <td style="color: ${g.tipo === 'gasto' ? '#dc3545' : '#28a745'}; font-weight: bold;">${g.tipo}</td>
-                                    <td style="color: ${g.tipo === 'gasto' ? '#dc3545' : '#28a745'}; font-weight: bold; cursor: pointer;" onclick="app.editarImporteGasto(${g.id})">€${g.amount.toFixed(2)} ✏️</td>
-                                    ${!this.publicViewOnly ? `<td><button class="btn-small delete" onclick="app.deleteGasto(${g.id})">Eliminar</button></td>` : ''}
+                                    <td style="color: ${g.tipo === 'gasto' ? '#dc3545' : '#28a745'}; font-weight: bold;">€${g.amount.toFixed(2)}</td>
+                                    ${!this.publicViewOnly ? `<td><button class="btn-small" onclick="app.abrirDialogoEditarGasto(${g.id})">✏️ Editar</button><button class="btn-small delete" onclick="app.deleteGasto(${g.id})">Eliminar</button></td>` : ''}
                                 </tr>
                             `).join('')}
                         </tbody>
@@ -1681,45 +1716,62 @@
                 this.renderGastos();
             },
             
-            editarGasto(id) {
+            abrirDialogoEditarGasto(id) {
                 const gasto = this.data.gastos.find(g => g.id === id);
                 if (!gasto) return;
                 
-                const nuevoConcepto = prompt('Concepto:', gasto.concepto);
-                if (nuevoConcepto !== null && nuevoConcepto.trim()) {
-                    gasto.concepto = nuevoConcepto.trim();
-                    this.saveData();
-                    this.renderGastos();
-                }
+                const html = `
+                    <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000;">
+                        <div style="background: white; padding: 25px; border-radius: 8px; max-width: 400px; width: 90%; box-shadow: 0 4px 20px rgba(0,0,0,0.2);">
+                            <h2 style="margin-top: 0;">Editar movimiento</h2>
+                            <div style="display: flex; flex-direction: column; gap: 12px;">
+                                <div>
+                                    <label style="font-weight: bold; display: block; margin-bottom: 5px;">Fecha (dd/mm/yyyy)</label>
+                                    <input type="text" id="editFechaGasto" value="${gasto.fecha}" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;">
+                                </div>
+                                <div>
+                                    <label style="font-weight: bold; display: block; margin-bottom: 5px;">Concepto</label>
+                                    <input type="text" id="editConceptoGasto" value="${gasto.concepto}" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;">
+                                </div>
+                                <div>
+                                    <label style="font-weight: bold; display: block; margin-bottom: 5px;">Importe (€)</label>
+                                    <input type="text" id="editImporteGasto" value="${gasto.amount.toFixed(2)}" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;">
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                                <button onclick="app.guardarGasto(${id})" style="flex: 1; padding: 10px; background: #667eea; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Guardar</button>
+                                <button onclick="app.cerrarDialogo()" style="flex: 1; padding: 10px; background: #ccc; color: black; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Cancelar</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.insertAdjacentHTML('beforeend', html);
             },
             
-            editarFechaGasto(id) {
+            guardarGasto(id) {
                 const gasto = this.data.gastos.find(g => g.id === id);
                 if (!gasto) return;
                 
-                const nuevaFecha = prompt('Fecha (dd/mm/yyyy):', gasto.fecha);
-                if (nuevaFecha !== null && nuevaFecha.trim()) {
-                    gasto.fecha = nuevaFecha.trim();
-                    this.saveData();
-                    this.renderGastos();
-                }
-            },
-            
-            editarImporteGasto(id) {
-                const gasto = this.data.gastos.find(g => g.id === id);
-                if (!gasto) return;
+                gasto.fecha = document.getElementById('editFechaGasto').value.trim();
+                gasto.concepto = document.getElementById('editConceptoGasto').value.trim();
                 
-                const nuevoImporte = prompt('Importe (€):', gasto.amount.toString());
-                if (nuevoImporte !== null) {
-                    const importe = parseFloat(nuevoImporte.replace(',', '.'));
-                    if (!isNaN(importe) && importe > 0) {
-                        gasto.amount = importe;
-                        this.saveData();
-                        this.renderGastos();
-                    } else {
-                        alert('Importe inválido');
-                    }
+                const importe = parseFloat(document.getElementById('editImporteGasto').value.replace(',', '.'));
+                
+                if (!gasto.concepto) {
+                    alert('El concepto es obligatorio');
+                    return;
                 }
+                
+                if (isNaN(importe) || importe <= 0) {
+                    alert('Importe inválido');
+                    return;
+                }
+                
+                gasto.amount = importe;
+                this.saveData();
+                this.renderGastos();
+                this.cerrarDialogo();
             },
             
             // ESPACIOS
