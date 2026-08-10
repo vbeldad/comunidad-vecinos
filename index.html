@@ -68,7 +68,9 @@
             <div class="stat">👥 Vecinos: <strong id="totalVecinos">0</strong></div>
             <div class="stat">💳 Cuotas pagadas: <strong id="totalCuotasPagadas">0</strong></div>
             <div class="stat">⏳ Cuotas pendientes: <strong id="totalCuotasPendientes">0</strong></div>
-            <div class="stat">💰 Total recaudado: <strong id="totalRecaudado">€0.00</strong></div>
+            <div class="stat">💰 Total recaudado: <strong id="totalRecaudado" style="color: #28a745;">€0.00</strong></div>
+            <div class="stat">📉 Total gastado: <strong id="totalGastado" style="color: #dc3545;">€0.00</strong></div>
+            <div class="stat" style="background: #e8f4f8; border: 2px solid #667eea;">📊 Saldo: <strong id="saldo" style="font-size: 18px;">€0.00</strong></div>
         </div>
 
         <!-- VECINOS -->
@@ -257,10 +259,21 @@
                 document.getElementById('totalVecinos').textContent = this.data.vecinos.length;
                 const pagadas = this.data.cuotas.filter(c => c.estado === 'pagada').length;
                 const pendientes = this.data.cuotas.filter(c => c.estado === 'pendiente').length;
-                const total = this.data.pagos.reduce((a, p) => a + p.importe, 0);
+                const totalRecaudado = this.data.pagos.reduce((a, p) => a + p.importe, 0);
+                const totalGastado = this.data.gastos.filter(g => g.tipo === 'gasto').reduce((a, g) => a + g.importe, 0);
+                const saldo = totalRecaudado - totalGastado;
                 document.getElementById('totalCuotasPagadas').textContent = pagadas;
                 document.getElementById('totalCuotasPendientes').textContent = pendientes;
-                document.getElementById('totalRecaudado').textContent = '€' + total.toFixed(2);
+                document.getElementById('totalRecaudado').textContent = '€' + totalRecaudado.toFixed(2);
+                document.getElementById('totalGastado').textContent = '€' + totalGastado.toFixed(2);
+                document.getElementById('saldo').textContent = '€' + saldo.toFixed(2);
+                // Cambiar color del saldo según sea positivo o negativo
+                const saldoDiv = document.getElementById('saldo');
+                if (saldo >= 0) {
+                    saldoDiv.style.color = '#28a745';
+                } else {
+                    saldoDiv.style.color = '#dc3545';
+                }
             },
             
             addVecino() {
