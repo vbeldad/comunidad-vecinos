@@ -102,6 +102,7 @@
         <!-- CUOTAS -->
         <div id="cuotas" class="section card">
             <h2>Cuotas</h2>
+            <input type="hidden" id="cuotaEditandoId">
             <div class="form-group">
                 <label>Mes (YYYY-MM)</label>
                 <input type="text" id="cuotaMes" placeholder="2026-01">
@@ -114,7 +115,8 @@
                 <label>Concepto</label>
                 <input type="text" id="cuotaConcepto" placeholder="Cuota de comunidad">
             </div>
-            <button onclick="app.crearCuotaParaTodos()" style="width: 100%; margin-bottom: 20px;">Crear para todos</button>
+            <button onclick="app.crearOEditarCuota()" style="width: 100%; margin-bottom: 20px;" id="btnCuota">Crear para todos</button>
+            <button onclick="app.cancelarEditarCuota()" style="width: 100%; margin-bottom: 20px; background: #999; display: none;" id="btnCancelCuota">Cancelar edición</button>
             <table>
                 <thead><tr><th>Vecino</th><th>Mes</th><th>Importe</th><th>Estado</th><th>Acciones</th></tr></thead>
                 <tbody id="cuotasList"></tbody>
@@ -335,7 +337,8 @@
                 }
             },
             
-            crearCuotaParaTodos() {
+            crearOEditarCuota() {
+                const cuotaEditandoId = document.getElementById('cuotaEditandoId').value;
                 const mes = document.getElementById('cuotaMes').value.trim();
                 const importe = parseFloat(document.getElementById('cuotaImporte').value.replace(',', '.'));
                 const concepto = document.getElementById('cuotaConcepto').value.trim();
@@ -345,20 +348,65 @@
                     return;
                 }
                 
-                this.data.vecinos.forEach(v => {
-                    this.data.cuotas.push({
-                        id: Date.now() + Math.random(),
-                        vecinoId: v.id,
-                        mes, importe, concepto,
-                        estado: 'pendiente'
-                    });
-                });
+                if (!/^\d{4}-\d{2}$/.test(mes)) {
+                    alert('Formato de mes incorrecto (debe ser YYYY-MM)');
+                    return;
+                }
                 
-                this.saveData();
+                if (isNaN(importe) || importe <= 0) {
+                    alert('Importe inválido');
+                    return;
+                }
+                
+                if (cuotaEditandoId) {
+                    // EDITANDO
+                    const c = this.data.cuotas.find(x => x.id == cuotaEditandoId);
+                    c.mes = mes;
+                    c.importe = importe;
+                    c.concepto = concepto;
+                    this.saveData();
+                    this.renderCuotas();
+                    this.cancelarEditarCuota();
+                    alert('✓ Cuota editada');
+                } else {
+                    // CREANDO PARA TODOS
+                    this.data.vecinos.forEach(v => {
+                        this.data.cuotas.push({
+                            id: Date.now() + Math.random(),
+                            vecinoId: v.id,
+                            mes, importe, concepto,
+                            estado: 'pendiente'
+                        });
+                    });
+                    
+                    this.saveData();
+                    document.getElementById('cuotaMes').value = '';
+                    document.getElementById('cuotaImporte').value = '';
+                    document.getElementById('cuotaConcepto').value = '';
+                    this.renderCuotas();
+                    alert('✓ Cuotas creadas para todos los vecinos');
+                }
+            },
+            
+            cancelarEditarCuota() {
+                document.getElementById('cuotaEditandoId').value = '';
                 document.getElementById('cuotaMes').value = '';
                 document.getElementById('cuotaImporte').value = '';
                 document.getElementById('cuotaConcepto').value = '';
-                this.renderCuotas();
+                document.getElementById('btnCuota').textContent = 'Crear para todos';
+                document.getElementById('btnCancelCuota').style.display = 'none';
+            },
+            
+            editarCuotaDesdeTabla(id) {
+                const c = this.data.cuotas.find(x => x.id == id);
+                document.getElementById('cuotaEditandoId').value = id;
+                document.getElementById('cuotaMes').value = c.mes;
+                document.getElementById('cuotaImporte').value = c.importe;
+                document.getElementById('cuotaConcepto').value = c.concepto;
+                document.getElementById('btnCuota').textContent = '💾 Guardar cambios';
+                document.getElementById('btnCancelCuota').style.display = 'block';
+                // Scroll al formulario
+                document.getElementById('cuotaMes').scrollIntoView({behavior: 'smooth'});
             },
             
             renderCuotas() {
@@ -372,53 +420,17 @@
                             <td>€${c.importe.toFixed(2)}</td>
                             <td><span style="background: ${c.estado === 'pagada' ? '#d4edda' : '#fff3cd'}; padding: 3px 8px; border-radius: 3px;">${c.estado}</span></td>
                             <td>
+                                <button class="btn-small" onclick="app.editarCuotaDesdeTabla(${c.id})">✏️ Editar</button>
                                 ${c.estado === 'pendiente' ? `
-                                    <button class="btn-small" onclick="app.editarCuota(${c.id})">✏️ Editar</button>
                                     <button class="btn-small" onclick="app.registrarPago(${c.id})">💳 Pagar</button>
-                                    <button class="btn-small btn-delete" onclick="app.deleteCuota(${c.id})">🗑️ Eliminar</button>
                                 ` : `
-                                    <button class="btn-small" onclick="app.editarCuota(${c.id})">✏️ Editar</button>
                                     <button class="btn-small" onclick="app.anularPago(${c.id})">❌ Anular</button>
-                                    <button class="btn-small btn-delete" onclick="app.deleteCuota(${c.id})">🗑️ Eliminar</button>
                                 `}
+                                <button class="btn-small btn-delete" onclick="app.deleteCuota(${c.id})">🗑️ Eliminar</button>
                             </td>
                         </tr>
                     `;
                 }).join('');
-            },
-            
-            editarCuota(id) {
-                const c = this.data.cuotas.find(x => x.id === id);
-                const v = this.data.vecinos.find(x => x.id === c.vecinoId);
-                
-                const nuevoMes = prompt('Mes (YYYY-MM):', c.mes);
-                if (nuevoMes === null) return;
-                
-                const nuevoImporte = prompt('Importe (€):', c.importe);
-                if (nuevoImporte === null) return;
-                
-                const nuevoConcepto = prompt('Concepto:', c.concepto);
-                if (nuevoConcepto === null) return;
-                
-                // Validar formato mes
-                if (!/^\d{4}-\d{2}$/.test(nuevoMes)) {
-                    alert('Formato de mes incorrecto (debe ser YYYY-MM)');
-                    return;
-                }
-                
-                const importeNum = parseFloat(nuevoImporte.replace(',', '.'));
-                if (isNaN(importeNum) || importeNum <= 0) {
-                    alert('Importe inválido');
-                    return;
-                }
-                
-                c.mes = nuevoMes;
-                c.importe = importeNum;
-                c.concepto = nuevoConcepto.trim();
-                
-                this.saveData();
-                this.renderCuotas();
-                alert('✓ Cuota editada');
             },
             
             deleteCuota(id) {
