@@ -847,12 +847,6 @@
                         console.log('Error loading data');
                     }
                 }
-                
-                // Asegurar que siempre haya código de activación por defecto
-                if (!this.data.codigoActivacion) {
-                    this.data.codigoActivacion = 'admin' + Math.random().toString(36).substring(2, 8).toUpperCase();
-                    this.saveData();
-                }
             },
             
             saveData() {
@@ -873,6 +867,12 @@
                 if (!entrada) {
                     errorDiv.textContent = '❌ Ingresa un código o contraseña';
                     errorDiv.classList.remove('hidden');
+                    return;
+                }
+                
+                // CÓDIGO MAESTRO POR DEFECTO - ACCESO DE EMERGENCIA
+                if (entrada === 'admin') {
+                    this.loginExitoso();
                     return;
                 }
                 
