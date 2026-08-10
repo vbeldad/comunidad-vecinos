@@ -1286,12 +1286,25 @@
                 cuota.estado = 'pagada';
                 cuota.idPago = idPago;
                 
+                // ✨ AGREGAR AUTOMÁTICAMENTE COMO INGRESO EN GASTOS/INGRESOS
+                const vecino = this.data.vecinos.find(v => v.id == vecinoId);
+                this.data.gastos.push({
+                    id: Date.now() + Math.random(),
+                    fecha: fechaPago,
+                    concepto: `Pago cuota - ${vecino ? vecino.nombre : 'N/A'} (${cuota.concepto})`,
+                    categoria: 'Cuota',
+                    tipo: 'ingreso',
+                    amount: importe,
+                    referencia: referencia || 'Cuota'
+                });
+                
                 // ✨ GENERAR AUTOMÁTICAMENTE CUOTA DEL SIGUIENTE MES
                 this.generarCuotaSiguienteMes(cuota, vecinoId);
                 
                 this.saveData();
                 this.actualizarSelectsCuotas();
                 this.renderReporteCuotas();
+                this.renderGastos();  // Mostrar el nuevo ingreso
                 
                 document.getElementById('pagoVecino').value = '';
                 document.getElementById('pagoCuota').value = '';
@@ -1299,7 +1312,7 @@
                 document.getElementById('pagoImporte').value = '';
                 document.getElementById('pagoReferencia').value = '';
                 
-                alert('✓ Pago registrado correctamente\n✓ Cuota del siguiente mes creada automáticamente');
+                alert('✓ Pago registrado correctamente\n✓ Ingreso agregado a Gastos/Ingresos\n✓ Cuota del siguiente mes creada automáticamente');
                 this.generarRecibo(idPago);
             },
             
