@@ -370,8 +370,9 @@
                     return;
                 }
                 
+                // Validar formato mes más flexible
                 if (!/^\d{4}-\d{2}$/.test(mes)) {
-                    alert('Formato de mes incorrecto (debe ser YYYY-MM)');
+                    alert('Formato de mes incorrecto.\nDebes usar YYYY-MM\nEjemplo: 2026-01, 2026-02, etc.');
                     return;
                 }
                 
@@ -428,14 +429,16 @@
                 const nuevoConcepto = prompt('Concepto:', c.concepto);
                 if (nuevoConcepto === null) return;
                 
-                // Validar
-                if (!nuevoMes.trim() || !nuevoConcepto.trim()) {
+                // Validar y limpiar mes
+                const mesTrimmed = nuevoMes.trim();
+                if (!mesTrimmed || !nuevoConcepto.trim()) {
                     alert('Campos incompletos');
                     return;
                 }
                 
-                if (!/^\d{4}-\d{2}$/.test(nuevoMes)) {
-                    alert('Formato de mes incorrecto (debe ser YYYY-MM)');
+                // Validar formato mes (más flexible)
+                if (!/^\d{4}-\d{2}$/.test(mesTrimmed)) {
+                    alert('Formato de mes incorrecto.\nDebes usar YYYY-MM\nEjemplo: 2026-01, 2026-02, etc.');
                     return;
                 }
                 
@@ -446,7 +449,7 @@
                 }
                 
                 // Guardar cambios
-                c.mes = nuevoMes;
+                c.mes = mesTrimmed;
                 c.importe = importeNum;
                 c.concepto = nuevoConcepto.trim();
                 
