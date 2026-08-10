@@ -401,8 +401,118 @@
                     this.renderCuotas();
                     this.renderGastos();
                     this.updateDashboard();
-                    alert('✓ Pago registrado\n✓ Ingreso agregado\n✓ Cuota del siguiente mes creada');
+                    
+                    // Generar recibo
+                    this.generarRecibo(vecino, c, fecha, c.importe);
+                    
+                    alert('✓ Pago registrado\n✓ Ingreso agregado\n✓ Cuota del siguiente mes creada\n✓ Recibo descargado');
                 }
+            },
+            
+            generarRecibo(vecino, cuota, fechaPago, importe) {
+                const numeroRecibo = Date.now().toString().slice(-6);
+                const hoy = new Date().toLocaleDateString('es-ES');
+                
+                const html = `<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f9f9f9; }
+        .recibo { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .header { text-align: center; border-bottom: 3px solid #667eea; padding-bottom: 20px; margin-bottom: 20px; }
+        h1 { color: #667eea; margin: 0; font-size: 28px; }
+        .subtitle { color: #999; font-size: 14px; margin-top: 5px; }
+        .numero-recibo { background: #f0f0f0; padding: 10px; border-radius: 4px; text-align: center; margin-bottom: 20px; font-weight: bold; }
+        .section { margin: 20px 0; }
+        .section-title { color: #667eea; font-weight: bold; margin-bottom: 10px; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
+        .field { display: flex; justify-content: space-between; margin: 8px 0; }
+        .label { font-weight: bold; color: #333; }
+        .value { text-align: right; }
+        .total { border-top: 2px solid #667eea; border-bottom: 2px solid #667eea; padding: 15px 0; margin: 20px 0; }
+        .total-line { display: flex; justify-content: space-between; font-size: 18px; font-weight: bold; }
+        .total-amount { color: #28a745; }
+        .footer { text-align: center; color: #999; font-size: 12px; margin-top: 30px; border-top: 1px solid #ddd; padding-top: 15px; }
+        .status { text-align: center; color: #28a745; font-size: 14px; margin: 10px 0; }
+        @media print { 
+            body { padding: 0; background: white; }
+            .recibo { box-shadow: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="recibo">
+        <div class="header">
+            <h1>🏢 RECIBO DE PAGO</h1>
+            <p class="subtitle">${this.data.nombre}</p>
+        </div>
+        
+        <div class="numero-recibo">
+            Recibo #${numeroRecibo}
+        </div>
+        
+        <div class="section">
+            <div class="section-title">Datos del Vecino</div>
+            <div class="field">
+                <span class="label">Vecino:</span>
+                <span class="value">${vecino.nombre}</span>
+            </div>
+            <div class="field">
+                <span class="label">Piso:</span>
+                <span class="value">${vecino.piso}</span>
+            </div>
+            ${vecino.tel ? `<div class="field">
+                <span class="label">Teléfono:</span>
+                <span class="value">${vecino.tel}</span>
+            </div>` : ''}
+            ${vecino.email ? `<div class="field">
+                <span class="label">Email:</span>
+                <span class="value">${vecino.email}</span>
+            </div>` : ''}
+        </div>
+        
+        <div class="section">
+            <div class="section-title">Detalles del Pago</div>
+            <div class="field">
+                <span class="label">Concepto:</span>
+                <span class="value">${cuota.concepto}</span>
+            </div>
+            <div class="field">
+                <span class="label">Período:</span>
+                <span class="value">${cuota.mes}</span>
+            </div>
+            <div class="field">
+                <span class="label">Fecha de pago:</span>
+                <span class="value">${fechaPago}</span>
+            </div>
+        </div>
+        
+        <div class="total">
+            <div class="total-line">
+                <span>Importe pagado:</span>
+                <span class="total-amount">€${importe.toFixed(2)}</span>
+            </div>
+        </div>
+        
+        <div class="status">✓ PAGADO</div>
+        
+        <div class="footer">
+            <p>Recibo generado: ${hoy}</p>
+            <p>Gracias por tu pago</p>
+            <p style="margin-top: 20px; color: #666;">Puedes imprimir este recibo presionando Ctrl+P</p>
+        </div>
+    </div>
+</body>
+</html>`;
+                
+                const blob = new Blob([html], {type: 'text/html; charset=utf-8'});
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                const nombreSeguro = vecino.nombre.replace(/\\s+/g, '-').toLowerCase();
+                a.download = `recibo-${nombreSeguro}-${cuota.mes}-${numeroRecibo}.html`;
+                a.click();
+                URL.revokeObjectURL(url);
             },
             
             generarCuotaSiguienteMes(cuotaActual) {
