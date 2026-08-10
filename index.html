@@ -364,10 +364,11 @@
             crearOEditarCuota() {
                 const cuotaEditandoId = document.getElementById('cuotaEditandoId').value;
                 const mes = document.getElementById('cuotaMes').value.trim();
-                const importe = parseFloat(document.getElementById('cuotaImporte').value.replace(',', '.'));
+                const importeStr = document.getElementById('cuotaImporte').value.trim().replace(',', '.');
+                const importe = parseFloat(importeStr);
                 const concepto = document.getElementById('cuotaConcepto').value.trim();
                 
-                if (!mes || !importe || !concepto) {
+                if (!mes || !importeStr || !concepto) {
                     alert('Completa todos los campos');
                     return;
                 }
@@ -378,22 +379,31 @@
                 }
                 
                 if (isNaN(importe) || importe <= 0) {
-                    alert('Importe inválido');
+                    alert('Importe inválido (debe ser un número mayor a 0)');
                     return;
                 }
                 
                 if (cuotaEditandoId) {
                     // EDITANDO
-                    const c = this.data.cuotas.find(x => x.id == cuotaEditandoId);
+                    const c = this.data.cuotas.find(x => x.id === parseInt(cuotaEditandoId) || x.id === cuotaEditandoId);
+                    if (!c) {
+                        alert('Cuota no encontrada');
+                        return;
+                    }
                     c.mes = mes;
                     c.importe = importe;
                     c.concepto = concepto;
                     this.saveData();
                     this.renderCuotas();
+                    this.updateDashboard();
                     this.cancelarEditarCuota();
                     alert('✓ Cuota editada');
                 } else {
                     // CREANDO PARA TODOS
+                    if (this.data.vecinos.length === 0) {
+                        alert('Agrega vecinos primero');
+                        return;
+                    }
                     this.data.vecinos.forEach(v => {
                         this.data.cuotas.push({
                             id: Date.now() + Math.random(),
@@ -408,6 +418,7 @@
                     document.getElementById('cuotaImporte').value = '';
                     document.getElementById('cuotaConcepto').value = '';
                     this.renderCuotas();
+                    this.updateDashboard();
                     alert('✓ Cuotas creadas para todos los vecinos');
                 }
             },
@@ -422,10 +433,14 @@
             },
             
             editarCuotaDesdeTabla(id) {
-                const c = this.data.cuotas.find(x => x.id == id);
+                const c = this.data.cuotas.find(x => x.id === id);
+                if (!c) {
+                    alert('Cuota no encontrada');
+                    return;
+                }
                 document.getElementById('cuotaEditandoId').value = id;
                 document.getElementById('cuotaMes').value = c.mes;
-                document.getElementById('cuotaImporte').value = c.importe;
+                document.getElementById('cuotaImporte').value = c.importe.toString();
                 document.getElementById('cuotaConcepto').value = c.concepto;
                 document.getElementById('btnCuota').textContent = '💾 Guardar cambios';
                 document.getElementById('btnCancelCuota').style.display = 'block';
