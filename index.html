@@ -759,12 +759,38 @@
             
             editarGasto(id) {
                 const g = this.data.gastos.find(x => x.id === id);
+                
+                const fecha = prompt('Fecha (dd/mm/yyyy):', g.fecha);
+                if (fecha === null) return;
+                
                 const concepto = prompt('Concepto:', g.concepto);
-                if (concepto !== null && concepto.trim()) {
-                    g.concepto = concepto.trim();
-                    this.saveData();
-                    this.renderGastos();
+                if (concepto === null) return;
+                
+                const tipo = prompt('Tipo (gasto/ingreso):', g.tipo);
+                if (tipo === null) return;
+                
+                if (tipo !== 'gasto' && tipo !== 'ingreso') {
+                    alert('Tipo debe ser "gasto" o "ingreso"');
+                    return;
                 }
+                
+                const importe = prompt('Importe (€):', g.importe);
+                if (importe === null) return;
+                
+                const importeNum = parseFloat(importe.replace(',', '.'));
+                if (isNaN(importeNum) || importeNum <= 0) {
+                    alert('Importe inválido');
+                    return;
+                }
+                
+                g.fecha = fecha.trim();
+                g.concepto = concepto.trim();
+                g.tipo = tipo.trim();
+                g.importe = importeNum;
+                
+                this.saveData();
+                this.renderGastos();
+                alert('✓ Gasto editado');
             },
             
             deleteGasto(id) {
