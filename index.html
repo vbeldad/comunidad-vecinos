@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión Comunidad de Vecinos v4</title>
+    <title>Gestión Comunidad de Vecinos</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: Arial, sans-serif; background: #667eea; min-height: 100vh; padding: 20px; }
@@ -261,14 +261,24 @@
                 document.getElementById('totalVecinos').textContent = this.data.vecinos.length;
                 const pagadas = this.data.cuotas.filter(c => c.estado === 'pagada').length;
                 const pendientes = this.data.cuotas.filter(c => c.estado === 'pendiente').length;
-                const totalRecaudado = this.data.pagos.reduce((a, p) => a + p.importe, 0);
+                
+                // Ingresos = pagos de cuotas + ingresos manuales en gastos
+                const ingresosAutomaticos = this.data.pagos.reduce((a, p) => a + p.importe, 0);
+                const ingresosMantuales = this.data.gastos.filter(g => g.tipo === 'ingreso').reduce((a, g) => a + g.importe, 0);
+                const totalIngresos = ingresosAutomaticos + ingresosMantuales;
+                
+                // Gastos = solo gastos manuales
                 const totalGastado = this.data.gastos.filter(g => g.tipo === 'gasto').reduce((a, g) => a + g.importe, 0);
-                const saldo = totalRecaudado - totalGastado;
+                
+                // Saldo final
+                const saldo = totalIngresos - totalGastado;
+                
                 document.getElementById('totalCuotasPagadas').textContent = pagadas;
                 document.getElementById('totalCuotasPendientes').textContent = pendientes;
-                document.getElementById('totalRecaudado').textContent = '€' + totalRecaudado.toFixed(2);
+                document.getElementById('totalRecaudado').textContent = '€' + totalIngresos.toFixed(2);
                 document.getElementById('totalGastado').textContent = '€' + totalGastado.toFixed(2);
                 document.getElementById('saldo').textContent = '€' + saldo.toFixed(2);
+                
                 // Cambiar color del saldo según sea positivo o negativo
                 const saldoDiv = document.getElementById('saldo');
                 if (saldo >= 0) {
