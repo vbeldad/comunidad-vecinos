@@ -2038,11 +2038,12 @@
             // CONFIGURACIÓN
             loadConfig() {
                 const configNombre = document.getElementById('configNombre');
+                // Los inputs del código están ocultos pero siguen existiendo
                 const configCodigoActual = document.getElementById('configCodigoActual');
                 
                 if (configNombre) configNombre.value = this.data.nombre;
                 if (configCodigoActual) {
-                    configCodigoActual.value = this.data.codigoActivacion || 'No configurado';
+                    configCodigoActual.value = this.data.codigoActivacion || '';
                 }
             },
             
