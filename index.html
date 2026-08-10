@@ -1010,17 +1010,29 @@
                                 <th>Teléfono</th>
                                 <th>Email</th>
                                 <th>Notas</th>
+                                <th>Alta</th>
                                 ${!this.publicViewOnly ? '<th>Acciones</th>' : ''}
                             </tr>
                         </thead>
                         <tbody>
                             ${vecinos.map(v => `
                                 <tr>
-                                    <td>${v.nombre}</td>
-                                    <td>${v.piso}</td>
-                                    <td>${v.telefono || '-'}</td>
-                                    <td>${v.email || '-'}</td>
-                                    <td>${v.notas || '-'}</td>
+                                    <td onclick="app.editarVecino(${v.id})" style="cursor: pointer; color: #667eea;">
+                                        ${v.nombre} ✏️
+                                    </td>
+                                    <td onclick="app.editarPisoVecino(${v.id})" style="cursor: pointer; color: #667eea;">
+                                        ${v.piso} ✏️
+                                    </td>
+                                    <td onclick="app.editarTelefonoVecino(${v.id})" style="cursor: pointer; color: #667eea;">
+                                        ${v.telefono || '-'} ✏️
+                                    </td>
+                                    <td onclick="app.editarEmailVecino(${v.id})" style="cursor: pointer; color: #667eea;">
+                                        ${v.email || '-'} ✏️
+                                    </td>
+                                    <td onclick="app.editarNotasVecino(${v.id})" style="cursor: pointer; color: #667eea;">
+                                        ${v.notas || '-'} ✏️
+                                    </td>
+                                    <td>${v.fecha}</td>
                                     ${!this.publicViewOnly ? `
                                         <td>
                                             <button class="btn-small delete" onclick="app.deleteVecino(${v.id})">Eliminar</button>
@@ -1036,6 +1048,66 @@
             deleteVecino(id) {
                 if (confirm('¿Eliminar este vecino?')) {
                     this.data.vecinos = this.data.vecinos.filter(v => v.id !== id);
+                    this.saveData();
+                    this.renderVecinos();
+                }
+            },
+            
+            editarVecino(id) {
+                const vecino = this.data.vecinos.find(v => v.id === id);
+                if (!vecino) return;
+                
+                const nuevoNombre = prompt('Nombre:', vecino.nombre);
+                if (nuevoNombre !== null && nuevoNombre.trim()) {
+                    vecino.nombre = nuevoNombre.trim();
+                    this.saveData();
+                    this.renderVecinos();
+                }
+            },
+            
+            editarPisoVecino(id) {
+                const vecino = this.data.vecinos.find(v => v.id === id);
+                if (!vecino) return;
+                
+                const nuevoPiso = prompt('Piso:', vecino.piso);
+                if (nuevoPiso !== null && nuevoPiso.trim()) {
+                    vecino.piso = nuevoPiso.trim();
+                    this.saveData();
+                    this.renderVecinos();
+                }
+            },
+            
+            editarTelefonoVecino(id) {
+                const vecino = this.data.vecinos.find(v => v.id === id);
+                if (!vecino) return;
+                
+                const nuevoTel = prompt('Teléfono:', vecino.telefono || '');
+                if (nuevoTel !== null) {
+                    vecino.telefono = nuevoTel.trim();
+                    this.saveData();
+                    this.renderVecinos();
+                }
+            },
+            
+            editarEmailVecino(id) {
+                const vecino = this.data.vecinos.find(v => v.id === id);
+                if (!vecino) return;
+                
+                const nuevoEmail = prompt('Email:', vecino.email || '');
+                if (nuevoEmail !== null) {
+                    vecino.email = nuevoEmail.trim();
+                    this.saveData();
+                    this.renderVecinos();
+                }
+            },
+            
+            editarNotasVecino(id) {
+                const vecino = this.data.vecinos.find(v => v.id === id);
+                if (!vecino) return;
+                
+                const nuevasNotas = prompt('Notas:', vecino.notas || '');
+                if (nuevasNotas !== null) {
+                    vecino.notas = nuevasNotas.trim();
                     this.saveData();
                     this.renderVecinos();
                 }
@@ -1212,6 +1284,9 @@
                 cuota.estado = 'pagada';
                 cuota.idPago = idPago;
                 
+                // ✨ GENERAR AUTOMÁTICAMENTE CUOTA DEL SIGUIENTE MES
+                this.generarCuotaSiguienteMes(cuota, vecinoId);
+                
                 this.saveData();
                 this.actualizarSelectsCuotas();
                 this.renderReporteCuotas();
@@ -1222,8 +1297,42 @@
                 document.getElementById('pagoImporte').value = '';
                 document.getElementById('pagoReferencia').value = '';
                 
-                alert('✓ Pago registrado correctamente');
+                alert('✓ Pago registrado correctamente\n✓ Cuota del siguiente mes creada automáticamente');
                 this.generarRecibo(idPago);
+            },
+            
+            generarCuotaSiguienteMes(cuotaActual, vecinoId) {
+                // Calcular siguiente mes
+                const mesActual = cuotaActual.mes; // Formato: YYYY-MM
+                const [año, mes] = mesActual.split('-');
+                let mesNum = parseInt(mes);
+                let añoNum = parseInt(año);
+                
+                mesNum++;
+                if (mesNum > 12) {
+                    mesNum = 1;
+                    añoNum++;
+                }
+                
+                const siguienteMes = `${añoNum}-${String(mesNum).padStart(2, '0')}`;
+                
+                // Verificar que no existe ya
+                const cuotaExiste = this.data.cuotas.some(c => 
+                    c.vecinoId == vecinoId && c.mes === siguienteMes && c.concepto === cuotaActual.concepto
+                );
+                
+                if (!cuotaExiste) {
+                    // Crear cuota del siguiente mes
+                    this.data.cuotas.push({
+                        id: Date.now() + Math.random(),
+                        vecinoId: vecinoId,
+                        mes: siguienteMes,
+                        importe: cuotaActual.importe,
+                        concepto: cuotaActual.concepto,
+                        estado: 'pendiente',
+                        fechaCreacion: new Date().toLocaleDateString('es-ES')
+                    });
+                }
             },
             
             renderReporteCuotas(mesFiltrro = '') {
@@ -1296,7 +1405,7 @@
                                             <tr style="border-bottom: 1px solid #ddd;">
                                                 <td style="padding: 8px;">${vecino ? vecino.nombre : 'N/A'}</td>
                                                 <td style="padding: 8px;">${c.concepto}</td>
-                                                <td style="padding: 8px; text-align: right;">€${c.importe.toFixed(2)}</td>
+                                                <td style="padding: 8px; text-align: right; cursor: pointer; color: #667eea;" onclick="app.editarCuota(${c.id})">€${c.importe.toFixed(2)} ✏️</td>
                                                 <td style="padding: 8px; text-align: center;">
                                                     <span style="padding: 3px 8px; border-radius: 3px; font-size: 11px; background: ${c.estado === 'pagada' ? '#d4edda; color: #155724;' : '#fff3cd; color: #856404;'}">
                                                         ${c.estado.toUpperCase()}
@@ -1305,6 +1414,7 @@
                                                 <td style="padding: 8px; text-align: center;">
                                                     ${c.estado === 'pagada' && pago ? `
                                                         <button class="btn-small" onclick="app.mostrarRecibo(${c.idPago})" style="font-size: 11px;">📄 Recibo</button>
+                                                        <button class="btn-small" onclick="app.editarPago(${c.id})" style="font-size: 11px;">✏️ Editar</button>
                                                     ` : ''}
                                                     ${!this.publicViewOnly && c.estado === 'pagada' ? `
                                                         <button class="btn-small delete" onclick="app.anularPago(${c.id})" style="font-size: 11px;">Anular</button>
@@ -1383,6 +1493,47 @@
                         this.saveData();
                         this.renderReporteCuotas();
                         alert('Pago anulado ✓');
+                    }
+                }
+            },
+            
+            editarCuota(cuotaId) {
+                const cuota = this.data.cuotas.find(c => c.id === cuotaId);
+                if (!cuota) return;
+                
+                const nuevoImporte = prompt('Nuevo importe (€):', cuota.importe.toString());
+                if (nuevoImporte !== null) {
+                    const importe = parseFloat(nuevoImporte.replace(',', '.'));
+                    if (!isNaN(importe) && importe > 0) {
+                        cuota.importe = importe;
+                        this.saveData();
+                        this.renderReporteCuotas();
+                    } else {
+                        alert('Importe inválido');
+                    }
+                }
+            },
+            
+            editarPago(cuotaId) {
+                const cuota = this.data.cuotas.find(c => c.id === cuotaId);
+                const pago = this.data.pagos.find(p => p.id === cuota.idPago);
+                
+                if (!pago) return;
+                
+                const nuevoImporte = prompt('Nuevo importe pagado (€):', pago.importe.toString());
+                if (nuevoImporte !== null) {
+                    const importe = parseFloat(nuevoImporte.replace(',', '.'));
+                    if (!isNaN(importe) && importe > 0) {
+                        pago.importe = importe;
+                        
+                        const nuevaFecha = prompt('Nueva fecha (yyyy-mm-dd):', pago.fechaPago);
+                        if (nuevaFecha !== null && nuevaFecha.trim()) {
+                            pago.fechaPago = nuevaFecha.trim();
+                            this.saveData();
+                            this.renderReporteCuotas();
+                        }
+                    } else {
+                        alert('Importe inválido');
                     }
                 }
             },
@@ -1511,11 +1662,11 @@
                         <tbody>
                             ${this.data.gastos.map(g => `
                                 <tr>
-                                    <td>${g.fecha}</td>
-                                    <td>${g.concepto}</td>
+                                    <td onclick="app.editarFechaGasto(${g.id})" style="cursor: pointer; color: #667eea;">${g.fecha} ✏️</td>
+                                    <td onclick="app.editarGasto(${g.id})" style="cursor: pointer; color: #667eea;">${g.concepto} ✏️</td>
                                     <td>${g.categoria}</td>
                                     <td style="color: ${g.tipo === 'gasto' ? '#dc3545' : '#28a745'}; font-weight: bold;">${g.tipo}</td>
-                                    <td style="color: ${g.tipo === 'gasto' ? '#dc3545' : '#28a745'}; font-weight: bold;">€${g.amount.toFixed(2)}</td>
+                                    <td style="color: ${g.tipo === 'gasto' ? '#dc3545' : '#28a745'}; font-weight: bold; cursor: pointer;" onclick="app.editarImporteGasto(${g.id})">€${g.amount.toFixed(2)} ✏️</td>
                                     ${!this.publicViewOnly ? `<td><button class="btn-small delete" onclick="app.deleteGasto(${g.id})">Eliminar</button></td>` : ''}
                                 </tr>
                             `).join('')}
@@ -1528,6 +1679,47 @@
                 this.data.gastos = this.data.gastos.filter(g => g.id !== id);
                 this.saveData();
                 this.renderGastos();
+            },
+            
+            editarGasto(id) {
+                const gasto = this.data.gastos.find(g => g.id === id);
+                if (!gasto) return;
+                
+                const nuevoConcepto = prompt('Concepto:', gasto.concepto);
+                if (nuevoConcepto !== null && nuevoConcepto.trim()) {
+                    gasto.concepto = nuevoConcepto.trim();
+                    this.saveData();
+                    this.renderGastos();
+                }
+            },
+            
+            editarFechaGasto(id) {
+                const gasto = this.data.gastos.find(g => g.id === id);
+                if (!gasto) return;
+                
+                const nuevaFecha = prompt('Fecha (dd/mm/yyyy):', gasto.fecha);
+                if (nuevaFecha !== null && nuevaFecha.trim()) {
+                    gasto.fecha = nuevaFecha.trim();
+                    this.saveData();
+                    this.renderGastos();
+                }
+            },
+            
+            editarImporteGasto(id) {
+                const gasto = this.data.gastos.find(g => g.id === id);
+                if (!gasto) return;
+                
+                const nuevoImporte = prompt('Importe (€):', gasto.amount.toString());
+                if (nuevoImporte !== null) {
+                    const importe = parseFloat(nuevoImporte.replace(',', '.'));
+                    if (!isNaN(importe) && importe > 0) {
+                        gasto.amount = importe;
+                        this.saveData();
+                        this.renderGastos();
+                    } else {
+                        alert('Importe inválido');
+                    }
+                }
             },
             
             // ESPACIOS
