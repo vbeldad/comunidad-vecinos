@@ -3,839 +3,107 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión Comunidad de Vecinos v3</title>
+    <title>Gestión Comunidad de Vecinos</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-            overflow: hidden;
-        }
-        
-        header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 20px;
-            text-align: center;
-        }
-        
-        header h1 {
-            font-size: 28px;
-            margin-bottom: 5px;
-        }
-        
-        header p {
-            font-size: 14px;
-            opacity: 0.9;
-        }
-        
-        .login-screen {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 500px;
-            padding: 20px;
-            background: #f5f5f5;
-        }
-        
-        .login-box {
-            background: white;
-            padding: 40px;
-            border-radius: 10px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-            width: 100%;
-            max-width: 400px;
-        }
-        
-        .login-box h2 {
-            text-align: center;
-            margin-bottom: 30px;
-            color: #333;
-        }
-        
-        .form-group {
-            margin-bottom: 20px;
-        }
-        
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            color: #555;
-            font-weight: 500;
-        }
-        
-        .form-group input, .form-group textarea, .form-group select {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-size: 16px;
-            font-family: inherit;
-        }
-        
-        .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 5px rgba(102, 126, 234, 0.3);
-        }
-        
-        button {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 12px 30px;
-            border: none;
-            border-radius: 5px;
-            font-size: 16px;
-            cursor: pointer;
-            transition: transform 0.2s;
-        }
-        
-        button:hover {
-            transform: translateY(-2px);
-        }
-        
-        button:active {
-            transform: translateY(0);
-        }
-        
-        .hidden {
-            display: none !important;
-        }
-        
-        .app-wrapper {
-            display: flex;
-            min-height: calc(100vh - 100px);
-        }
-        
-        .sidebar {
-            width: 250px;
-            background: #f8f9fa;
-            border-right: 1px solid #ddd;
-            padding: 20px;
-        }
-        
-        .sidebar h3 {
-            color: #333;
-            margin-bottom: 15px;
-            font-size: 16px;
-        }
-        
-        .nav-item {
-            display: block;
-            padding: 10px 15px;
-            margin-bottom: 8px;
-            background: white;
-            border-left: 3px solid transparent;
-            cursor: pointer;
-            border-radius: 3px;
-            transition: all 0.3s;
-            color: #555;
-            text-decoration: none;
-        }
-        
-        .nav-item:hover {
-            background: #e9ecef;
-            border-left-color: #667eea;
-        }
-        
-        .nav-item.active {
-            background: #667eea;
-            color: white;
-            border-left-color: #667eea;
-        }
-        
-        .main-content {
-            flex: 1;
-            padding: 30px;
-            overflow-y: auto;
-        }
-        
-        .section {
-            display: none;
-        }
-        
-        .section.active {
-            display: block;
-            animation: fadeIn 0.3s ease-in;
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        .section h2 {
-            color: #333;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #667eea;
-        }
-        
-        .section h3 {
-            color: #555;
-            margin-top: 20px;
-            margin-bottom: 15px;
-        }
-        
-        .item-card {
-            background: #f8f9fa;
-            padding: 15px;
-            margin-bottom: 15px;
-            border-radius: 5px;
-            border-left: 4px solid #667eea;
-        }
-        
-        .item-card h4 {
-            color: #333;
-            margin-bottom: 8px;
-        }
-        
-        .item-card p {
-            color: #666;
-            font-size: 14px;
-            margin: 5px 0;
-        }
-        
-        .item-card .date {
-            color: #999;
-            font-size: 12px;
-            margin-top: 8px;
-        }
-        
-        .item-actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 10px;
-        }
-        
-        .btn-small {
-            padding: 6px 12px;
-            font-size: 12px;
-            background: #667eea;
-            color: white;
-            border: none;
-            border-radius: 3px;
-            cursor: pointer;
-        }
-        
-        .btn-small.delete {
-            background: #dc3545;
-        }
-        
-        .btn-small:hover {
-            opacity: 0.8;
-        }
-        
-        .admin-badge {
-            display: inline-block;
-            background: #667eea;
-            color: white;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 12px;
-            margin-bottom: 20px;
-        }
-        
-        .public-badge {
-            display: inline-block;
-            background: #28a745;
-            color: white;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 12px;
-            margin-bottom: 20px;
-        }
-        
-        .form-row {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-        
-        .form-row > div {
-            flex: 1;
-        }
-        
-        textarea {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-family: inherit;
-            resize: vertical;
-            min-height: 100px;
-        }
-        
-        textarea:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 5px rgba(102, 126, 234, 0.3);
-        }
-        
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-        
-        .stat-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 20px;
-            border-radius: 8px;
-            text-align: center;
-        }
-        
-        .stat-card h3 {
-            font-size: 28px;
-            margin: 10px 0;
-            color: white;
-        }
-        
-        .stat-card p {
-            font-size: 12px;
-            opacity: 0.9;
-            color: white;
-        }
-        
-        .url-box {
-            background: #f0f0f0;
-            padding: 15px;
-            border-radius: 5px;
-            margin: 20px 0;
-            border: 1px solid #ddd;
-        }
-        
-        .url-box p {
-            color: #666;
-            font-size: 14px;
-            margin-bottom: 10px;
-        }
-        
-        .url-box input {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 3px;
-            font-size: 12px;
-            font-family: monospace;
-            margin-bottom: 10px;
-        }
-        
-        .btn-copy {
-            background: #28a745;
-            padding: 10px 20px;
-            font-size: 14px;
-            width: 100%;
-            margin-bottom: 10px;
-        }
-        
-        .logout-btn {
-            background: #dc3545;
-            padding: 10px 20px;
-        }
-        
-        .top-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-        
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        
-        table th {
-            background: #f0f0f0;
-            padding: 12px;
-            text-align: left;
-            border-bottom: 2px solid #ddd;
-            color: #333;
-            font-weight: 600;
-        }
-        
-        table td {
-            padding: 12px;
-            border-bottom: 1px solid #ddd;
-            color: #666;
-        }
-        
-        table tr:hover {
-            background: #f9f9f9;
-        }
-        
-        .error {
-            background: #f8d7da;
-            color: #721c24;
-            padding: 12px;
-            border-radius: 5px;
-            margin-bottom: 15px;
-        }
-        
-        .success {
-            background: #d4edda;
-            color: #155724;
-            padding: 12px;
-            border-radius: 5px;
-            margin-bottom: 15px;
-        }
-        
-        @media (max-width: 768px) {
-            .app-wrapper {
-                flex-direction: column;
-            }
-            
-            .sidebar {
-                width: 100%;
-                border-right: none;
-                border-bottom: 1px solid #ddd;
-                display: flex;
-                overflow-x: auto;
-            }
-            
-            .sidebar h3 {
-                display: none;
-            }
-            
-            .nav-item {
-                margin-bottom: 0;
-                margin-right: 10px;
-                white-space: nowrap;
-            }
-            
-            .main-content {
-                padding: 20px;
-            }
-            
-            .form-row {
-                flex-direction: column;
-            }
-            
-            .login-box {
-                padding: 20px;
-            }
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: #667eea; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+        .container { width: 100%; max-width: 500px; background: white; padding: 40px; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
+        h1 { color: #333; margin-bottom: 10px; text-align: center; }
+        .subtitle { text-align: center; color: #999; font-size: 12px; margin-bottom: 30px; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 5px; color: #333; font-weight: bold; }
+        input[type="password"], input[type="text"] { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
+        button { width: 100%; padding: 12px; background: #667eea; color: white; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; font-weight: bold; }
+        button:hover { background: #5568d3; }
+        .error { color: #dc3545; font-size: 12px; margin-top: 10px; display: none; }
+        .hidden { display: none !important; }
+        .app { padding: 20px; }
+        .nav { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .nav button { flex: 1; min-width: 100px; padding: 8px; font-size: 13px; background: #667eea; }
+        .section { display: none; }
+        .section.active { display: block; }
+        table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+        th, td { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background: #f5f5f5; font-weight: bold; }
+        .stat { background: #f0f0f0; padding: 10px; margin: 10px 0; border-radius: 4px; }
+        .logout { background: #dc3545 !important; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>🏘️ Gestión Comunidad de Vecinos</h1>
-            <p>Sistema de información y administración</p>
-        </header>
-        
-        <!-- LOGIN SCREEN -->
-        <div id="loginScreen" class="login-screen">
-            <div class="login-box">
-                <h2>🔐 Acceso Administrador</h2>
-                <div id="loginError" class="error hidden"></div>
-                
-                <div style="background: #e8f4f8; padding: 15px; border-radius: 5px; margin-bottom: 20px; border-left: 3px solid #17a2b8;">
-                    <p style="font-size: 12px; color: #0c5460; margin: 0;">
-                        ✓ Puedes entrar con:<br>
-                        • Código de Activación<br>
-                        • O tu Contraseña
-                    </p>
-                </div>
-                
-                <div class="form-group">
-                    <label>Código de Activación / Contraseña</label>
-                    <input type="password" id="passwordInput" placeholder="Ingresa el código o contraseña">
-                </div>
-                <button onclick="app.login()">🔓 Acceder</button>
-                <p style="text-align: center; margin-top: 20px; color: #999; font-size: 12px;">
-                    ℹ️ Primera vez: Ve a Configuración para establecer código y contraseña
-                </p>
-            </div>
+    <!-- LOGIN -->
+    <div id="loginScreen" class="container">
+        <h1>🏢 Gestión Comunidad</h1>
+        <p class="subtitle">Sistema de información y administración</p>
+        <div class="form-group">
+            <label>Contraseña</label>
+            <input type="password" id="passwordInput" placeholder="Ingresa tu contraseña">
+            <div class="error" id="loginError"></div>
         </div>
+        <button onclick="app.login()">🔓 Acceder</button>
+    </div>
+
+    <!-- APP -->
+    <div id="appScreen" class="container hidden">
+        <h1>🏢 Gestión Comunidad</h1>
         
-        <!-- MAIN APP -->
-        <div id="appScreen" class="hidden">
-            <div class="app-wrapper">
-                <div class="sidebar">
-                    <h3>📋 MENÚ</h3>
-                    <a class="nav-item active" onclick="app.showSection('dashboard')">📊 Dashboard</a>
-                    <a class="nav-item" onclick="app.showSection('vecinos')">👥 Vecinos</a>
-                    <a class="nav-item" onclick="app.showSection('cuotas')">💳 Cuotas</a>
-                    <a class="nav-item" onclick="app.showSection('anuncios')">📢 Anuncios</a>
-                    <a class="nav-item" onclick="app.showSection('gastos')">💰 Gastos</a>
-                    <a class="nav-item" onclick="app.showSection('espacios')">🏠 Espacios</a>
-                    <a class="nav-item" onclick="app.showSection('documentos')">📄 Documentos</a>
-                    <a class="nav-item" onclick="app.showSection('configuracion')">⚙️ Config</a>
-                    <a class="nav-item logout-btn" onclick="app.logout()">🚪 Salir</a>
-                </div>
-                
-                <div class="main-content">
-                    <!-- DASHBOARD -->
-                    <div id="dashboard" class="section active">
-                        <div class="top-bar">
-                            <h2>📊 Dashboard</h2>
-                            <span class="admin-badge">👤 Admin</span>
-                        </div>
-                        <div class="stats-grid" id="statsGrid"></div>
-                        
-                        <h3>ℹ️ Link de Acceso Público</h3>
-                        <p>Los vecinos pueden acceder a información de solo lectura:</p>
-                        <div class="url-box">
-                            <input type="text" id="publicUrl" readonly>
-                            <button class="btn-copy" onclick="app.copyUrl()">📋 Copiar Link</button>
-                        </div>
-                    </div>
-                    
-                    <!-- VECINOS -->
-                    <div id="vecinos" class="section">
-                        <h2>👥 Base de Datos de Vecinos</h2>
-                        
-                        <div style="background: #f8f9fa; padding: 20px; border-radius: 5px; margin-bottom: 20px;">
-                            <h3>Agregar Nuevo Vecino</h3>
-                            <div class="form-row">
-                                <div>
-                                    <label>Nombre Completo</label>
-                                    <input type="text" id="vecinoNombre" placeholder="Ej: Juan García López">
-                                </div>
-                                <div>
-                                    <label>Piso/Puerta</label>
-                                    <input type="text" id="vecinoPiso" placeholder="Ej: 3B">
-                                </div>
-                            </div>
-                            <div class="form-row">
-                                <div>
-                                    <label>Teléfono</label>
-                                    <input type="tel" id="vecinoTelefono" placeholder="+34 6XX XXX XXX">
-                                </div>
-                                <div>
-                                    <label>Email</label>
-                                    <input type="email" id="vecinoEmail" placeholder="email@example.com">
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label>Notas</label>
-                                <textarea id="vecinoNotas" placeholder="Ej: Dueño, alquilado, etc."></textarea>
-                            </div>
-                            <button onclick="app.addVecino()" style="width: 100%;">➕ Agregar Vecino</button>
-                        </div>
-                        
-                        <h3>Listado de Vecinos</h3>
-                        <input type="text" id="buscadorVecinos" placeholder="🔍 Buscar..." style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 5px; margin-bottom: 15px;">
-                        <div id="vecinosList"></div>
-                    </div>
-                    
-                    <!-- CUOTAS -->
-                    <div id="cuotas" class="section">
-                        <h2>💳 Gestión de Cuotas</h2>
-                        
-                        <div style="background: #f8f9fa; padding: 20px; border-radius: 5px; margin-bottom: 20px;">
-                            <h3>Crear Nueva Cuota</h3>
-                            <div class="form-row">
-                                <div>
-                                    <label>Mes/Año</label>
-                                    <input type="month" id="cuotaMes">
-                                </div>
-                                <div>
-                                    <label>Cantidad (€)</label>
-                                    <input type="number" id="cuotaImporte" placeholder="0.00" step="0.01">
-                                </div>
-                                <div>
-                                    <label>Concepto</label>
-                                    <input type="text" id="cuotaConcepto" placeholder="Ej: Cuota ordinaria">
-                                </div>
-                            </div>
-                            <button onclick="app.crearCuotaParaTodos()" style="width: 100%;">➕ Crear Cuota para Todos</button>
-                        </div>
-                        
-                        <div style="background: #e8f4f8; padding: 20px; border-radius: 5px; margin-bottom: 20px; border-left: 4px solid #17a2b8;">
-                            <h3>Registrar Pago</h3>
-                            <div class="form-row">
-                                <div>
-                                    <label>Vecino</label>
-                                    <select id="pagoVecino"></select>
-                                </div>
-                                <div>
-                                    <label>Cuota</label>
-                                    <select id="pagoCuota"></select>
-                                </div>
-                            </div>
-                            <div class="form-row">
-                                <div>
-                                    <label>Fecha de Pago</label>
-                                    <input type="date" id="pagoFecha">
-                                </div>
-                                <div>
-                                    <label>Importe Pagado (€)</label>
-                                    <input type="number" id="pagoImporte" placeholder="0.00" step="0.01">
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label>Referencia/Método</label>
-                                <input type="text" id="pagoReferencia" placeholder="Ej: Transferencia, Efectivo, Cheque">
-                            </div>
-                            <button onclick="app.registrarPago()" style="width: 100%;">✅ Registrar Pago</button>
-                        </div>
-                        
-                        <h3>📊 Reporte de Cuotas</h3>
-                        <div style="margin-bottom: 15px;">
-                            <label>Filtrar por período:</label>
-                            <input type="month" id="filtroReporte" onchange="app.renderReporteCuotas(this.value)" style="padding: 8px; border: 1px solid #ddd; border-radius: 3px;">
-                        </div>
-                        <div id="reporteCuotas"></div>
-                    </div>
-                    
-                    <!-- ANUNCIOS -->
-                    <div id="anuncios" class="section">
-                        <h2>📢 Anuncios y Avisos</h2>
-                        
-                        <div style="background: #f8f9fa; padding: 20px; border-radius: 5px; margin-bottom: 20px;">
-                            <h3>Crear Nuevo Anuncio</h3>
-                            <div class="form-group">
-                                <label>Título</label>
-                                <input type="text" id="anuncioTitulo" placeholder="Ej: Mantenimiento de ascensor">
-                            </div>
-                            <div class="form-group">
-                                <label>Mensaje</label>
-                                <textarea id="anuncioMensaje" placeholder="Describe el anuncio..."></textarea>
-                            </div>
-                            <div class="form-group">
-                                <label>Urgencia</label>
-                                <select id="anuncioUrgencia">
-                                    <option value="normal">Normal</option>
-                                    <option value="importante">Importante</option>
-                                    <option value="urgente">Urgente</option>
-                                </select>
-                            </div>
-                            <button onclick="app.addAnuncio()" style="width: 100%;">➕ Publicar</button>
-                        </div>
-                        
-                        <h3>Anuncios Publicados</h3>
-                        <div id="anunciosList"></div>
-                    </div>
-                    
-                    <!-- GASTOS -->
-                    <div id="gastos" class="section">
-                        <h2>💰 Gastos, Ingresos y Cuotas</h2>
-                        
-                        <div style="background: #f8f9fa; padding: 20px; border-radius: 5px; margin-bottom: 20px;">
-                            <h3>Registrar Movimiento</h3>
-                            <div class="form-row">
-                                <div>
-                                    <label>Tipo</label>
-                                    <select id="gastoTipo">
-                                        <option value="gasto">Gasto</option>
-                                        <option value="ingreso">Ingreso</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label>Categoría</label>
-                                    <select id="gastoCategoria">
-                                        <option value="cuota">Cuota</option>
-                                        <option value="mantenimiento">Mantenimiento</option>
-                                        <option value="reparacion">Reparación</option>
-                                        <option value="limpieza">Limpieza</option>
-                                        <option value="servicios">Servicios</option>
-                                        <option value="otro">Otro</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="form-row">
-                                <div>
-                                    <label>Concepto</label>
-                                    <input type="text" id="gastoConcepto" placeholder="Descripción">
-                                </div>
-                                <div>
-                                    <label>Cantidad (€)</label>
-                                    <input type="number" id="gastoAmount" placeholder="0.00" step="0.01">
-                                </div>
-                            </div>
-                            <button onclick="app.addGasto()" style="width: 100%;">➕ Registrar</button>
-                        </div>
-                        
-                        <h3>Resumen Financiero</h3>
-                        <div id="gastosResumen"></div>
-                        
-                        <h3>Historial</h3>
-                        <div id="gastosList"></div>
-                    </div>
-                    
-                    <!-- ESPACIOS -->
-                    <div id="espacios" class="section">
-                        <h2>🏠 Espacios Comunes</h2>
-                        
-                        <div style="background: #f8f9fa; padding: 20px; border-radius: 5px; margin-bottom: 20px;">
-                            <h3>Crear Espacio</h3>
-                            <div class="form-group">
-                                <label>Nombre</label>
-                                <input type="text" id="espacioNombre" placeholder="Ej: Salón de actos">
-                            </div>
-                            <div class="form-group">
-                                <label>Descripción</label>
-                                <textarea id="espacioDescripcion" placeholder="Detalles..."></textarea>
-                            </div>
-                            <div class="form-row">
-                                <div>
-                                    <label>Capacidad</label>
-                                    <input type="number" id="espacioCapacidad" placeholder="Personas">
-                                </div>
-                                <div>
-                                    <label>Tarifa/Hora (€)</label>
-                                    <input type="number" id="espacioTarifa" placeholder="0.00" step="0.01">
-                                </div>
-                            </div>
-                            <button onclick="app.addEspacio()" style="width: 100%;">➕ Crear</button>
-                        </div>
-                        
-                        <div style="background: #f8f9fa; padding: 20px; border-radius: 5px; margin-bottom: 20px;">
-                            <h3>Nueva Reserva</h3>
-                            <div class="form-group">
-                                <label>Espacio</label>
-                                <select id="reservaEspacio"></select>
-                            </div>
-                            <div class="form-row">
-                                <div>
-                                    <label>Fecha</label>
-                                    <input type="date" id="reservaFecha">
-                                </div>
-                                <div>
-                                    <label>Hora Inicio</label>
-                                    <input type="time" id="reservaHoraInicio">
-                                </div>
-                                <div>
-                                    <label>Hora Fin</label>
-                                    <input type="time" id="reservaHoraFin">
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label>Responsable</label>
-                                <input type="text" id="reservaVecino" placeholder="Nombre">
-                            </div>
-                            <button onclick="app.addReserva()" style="width: 100%;">➕ Reservar</button>
-                        </div>
-                        
-                        <h3>Espacios</h3>
-                        <div id="espaciosList"></div>
-                    </div>
-                    
-                    <!-- DOCUMENTOS -->
-                    <div id="documentos" class="section">
-                        <h2>📄 Documentos</h2>
-                        
-                        <div style="background: #f8f9fa; padding: 20px; border-radius: 5px; margin-bottom: 20px;">
-                            <h3>Compartir Documento</h3>
-                            <div class="form-group">
-                                <label>Título</label>
-                                <input type="text" id="docTitulo" placeholder="Ej: Presupuesto Reparación Ascensor">
-                            </div>
-                            <div class="form-group">
-                                <label>Tipo</label>
-                                <select id="docTipo">
-                                    <option value="presupuesto">Presupuesto</option>
-                                    <option value="factura">Factura</option>
-                                    <option value="acta">Acta</option>
-                                    <option value="regulacion">Regulación</option>
-                                    <option value="otro">Otro</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>Adjuntar Archivo (PDF, Imagen, Excel, etc.)</label>
-                                <input type="file" id="docArchivo" accept=".pdf,.jpg,.jpeg,.png,.xlsx,.xls,.doc,.docx,.txt,.gif,.bmp" style="padding: 8px; border: 1px solid #ddd; border-radius: 3px; width: 100%;">
-                                <p style="font-size: 12px; color: #999; margin-top: 5px;">Máximo 5MB. Formatos: PDF, JPG, PNG, Excel, Word, TXT</p>
-                            </div>
-                            <div class="form-group">
-                                <label>Descripción (opcional)</label>
-                                <textarea id="docContenido" placeholder="Notas adicionales..."></textarea>
-                            </div>
-                            <button onclick="app.addDocumento()" style="width: 100%;">➕ Compartir</button>
-                        </div>
-                        
-                        <h3>Documentos</h3>
-                        <div id="documentosList"></div>
-                    </div>
-                    
-                    <!-- CONFIGURACIÓN -->
-                    <div id="configuracion" class="section">
-                        <h2>⚙️ Configuración</h2>
-                        
-                        <div style="background: #f8f9fa; padding: 20px; border-radius: 5px; margin-bottom: 20px;">
-                            <h3>👤 Información de Comunidad</h3>
-                            <div class="form-group">
-                                <label>Nombre de la Comunidad</label>
-                                <input type="text" id="configNombre" placeholder="Comunidad de Vecinos">
-                            </div>
-                        </div>
-                        
-                        <!-- CÓDIGO DE ACTIVACIÓN OCULTO - Solo funciona internamente para acceso de administrador -->
-                        <div style="display: none;">
-                            <input type="text" id="configCodigoActual">
-                            <input type="text" id="configCodigoNuevo">
-                        </div>
-                        
-                        <div style="background: #fff3cd; padding: 20px; border-radius: 5px; margin-bottom: 20px; border-left: 4px solid #ffc107;">
-                            <h3>🔒 Contraseña</h3>
-                            <div class="form-group">
-                                <label>Nueva Contraseña</label>
-                                <input type="password" id="configPassword" placeholder="Deja en blanco para no cambiar">
-                            </div>
-                            <div class="form-group">
-                                <label>Confirmar Contraseña</label>
-                                <input type="password" id="configPasswordConfirm" placeholder="Confirma">
-                            </div>
-                        </div>
-                        
-                        <button onclick="app.saveConfig()" style="width: 100%; margin-bottom: 20px;">💾 Guardar Cambios</button>
-                        
-                        <div style="background: #f8d7da; padding: 20px; border-radius: 5px; border-left: 4px solid #dc3545;">
-                            <h3>💾 Datos</h3>
-                            <button onclick="app.exportData()" style="width: 100%; background: #17a2b8; margin-bottom: 10px;">📥 Descargar Backup</button>
-                            <button onclick="app.clearAllData()" style="width: 100%; background: #dc3545;">🗑️ Borrar Todo</button>
-                        </div>
-                    </div>
-                </div>
+        <div class="nav">
+            <button onclick="app.showSection('dashboard')">Dashboard</button>
+            <button onclick="app.showSection('vecinos')">Vecinos</button>
+            <button onclick="app.showSection('config')">Configuración</button>
+            <button class="logout" onclick="app.logout()">Salir</button>
+        </div>
+
+        <!-- DASHBOARD -->
+        <div id="dashboard" class="section active">
+            <h2>Dashboard</h2>
+            <div class="stat">👥 Vecinos: <strong id="totalVecinos">0</strong></div>
+            <div class="stat">📋 Total datos guardados</div>
+        </div>
+
+        <!-- VECINOS -->
+        <div id="vecinos" class="section">
+            <h2>Vecinos</h2>
+            <div class="form-group">
+                <label>Nombre</label>
+                <input type="text" id="vecinoNombre" placeholder="Nombre del vecino">
             </div>
+            <div class="form-group">
+                <label>Piso</label>
+                <input type="text" id="vecinoPiso" placeholder="Número de piso">
+            </div>
+            <button onclick="app.addVecino()">Agregar Vecino</button>
+            <table>
+                <thead><tr><th>Nombre</th><th>Piso</th><th>Acciones</th></tr></thead>
+                <tbody id="vecinosList"></tbody>
+            </table>
+        </div>
+
+        <!-- CONFIGURACIÓN -->
+        <div id="config" class="section">
+            <h2>Configuración</h2>
+            <div class="form-group">
+                <label>Nueva Contraseña</label>
+                <input type="password" id="newPassword" placeholder="Dejar en blanco para no cambiar">
+            </div>
+            <div class="form-group">
+                <label>Confirmar Contraseña</label>
+                <input type="password" id="confirmPassword" placeholder="Confirma">
+            </div>
+            <button onclick="app.saveConfig()">Guardar</button>
+            <button onclick="app.exportData()" style="background: #17a2b8; margin-top: 10px;">Descargar Backup</button>
         </div>
     </div>
-    
+
     <script>
         const app = {
-            isLoggedIn: false,
-            publicViewOnly: false,
             data: {
                 password: null,
-                codigoActivacion: null,
                 nombre: 'Comunidad de Vecinos',
-                vecinos: [],
-                cuotas: [],
-                pagos: [],
-                anuncios: [],
-                gastos: [],
-                espacios: [],
-                reservas: [],
-                documentos: []
+                vecinos: []
             },
             
             init() {
                 this.loadData();
-                this.updatePublicUrl();
-                this.checkIfPublicView();
-                document.getElementById('passwordInput').addEventListener('keypress', (e) => {
-                    if (e.key === 'Enter') this.login();
-                });
             },
             
             loadData() {
@@ -843,8 +111,8 @@
                 if (stored) {
                     try {
                         this.data = JSON.parse(stored);
-                    } catch (e) {
-                        console.log('Error loading data');
+                    } catch(e) {
+                        console.log('Error loading');
                     }
                 }
             },
@@ -853,16 +121,10 @@
                 localStorage.setItem('comunidadData', JSON.stringify(this.data));
             },
             
-            checkIfPublicView() {
-                const params = new URLSearchParams(window.location.search);
-                if (params.has('public')) {
-                    this.showPublicView();
-                }
-            },
-            
             login() {
-                const entrada = document.getElementById('passwordInput').value;
+                const entrada = document.getElementById('passwordInput').value.trim();
                 const errorDiv = document.getElementById('loginError');
+                errorDiv.classList.add('hidden');
                 
                 if (!entrada) {
                     errorDiv.textContent = '❌ Ingresa una contraseña';
@@ -870,13 +132,7 @@
                     return;
                 }
                 
-                // CÓDIGO MAESTRO POR DEFECTO - ACCESO DE EMERGENCIA
-                if (entrada === 'admin') {
-                    this.loginExitoso();
-                    return;
-                }
-                
-                // Primera vez: establece contraseña
+                // Primera vez
                 if (!this.data.password) {
                     this.data.password = btoa(entrada);
                     this.saveData();
@@ -884,1314 +140,119 @@
                     return;
                 }
                 
-                // Verificar contraseña
+                // Verificar
                 if (btoa(entrada) === this.data.password) {
                     this.loginExitoso();
                     return;
                 }
                 
-                // Contraseña incorrecta
                 errorDiv.textContent = '❌ Contraseña incorrecta';
                 errorDiv.classList.remove('hidden');
             },
             
             loginExitoso() {
-                this.isLoggedIn = true;
                 document.getElementById('loginScreen').classList.add('hidden');
                 document.getElementById('appScreen').classList.remove('hidden');
-                this.loadConfig();
-                this.renderAll();
                 document.getElementById('passwordInput').value = '';
-                document.getElementById('loginError').classList.add('hidden');
+                this.updateDashboard();
             },
             
             logout() {
-                if (confirm('¿Seguro que quieres salir?')) {
-                    this.isLoggedIn = false;
+                if (confirm('¿Salir?')) {
                     document.getElementById('appScreen').classList.add('hidden');
                     document.getElementById('loginScreen').classList.remove('hidden');
-                    document.getElementById('passwordInput').value = '';
                 }
             },
             
-            showPublicView() {
-                document.getElementById('loginScreen').classList.add('hidden');
-                document.getElementById('appScreen').classList.remove('hidden');
-                this.publicViewOnly = true;
-                this.renderAll();
-            },
-            
-            showSection(id) {
+            showSection(name) {
                 document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-                document.getElementById(id).classList.add('active');
-                document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
-                event.target.classList.add('active');
+                document.getElementById(name).classList.add('active');
+                if (name === 'vecinos') this.renderVecinos();
+                if (name === 'dashboard') this.updateDashboard();
             },
             
-            updatePublicUrl() {
-                const baseUrl = window.location.href.split('?')[0];
-                const publicUrl = baseUrl + '?public=true';
-                const urlInput = document.getElementById('publicUrl');
-                if (urlInput) urlInput.value = publicUrl;
+            updateDashboard() {
+                document.getElementById('totalVecinos').textContent = this.data.vecinos.length;
             },
             
-            copyUrl() {
-                const url = document.getElementById('publicUrl');
-                url.select();
-                document.execCommand('copy');
-                alert('Link copiado ✓');
-            },
-            
-            // VECINOS
             addVecino() {
                 const nombre = document.getElementById('vecinoNombre').value.trim();
                 const piso = document.getElementById('vecinoPiso').value.trim();
-                const telefono = document.getElementById('vecinoTelefono').value.trim();
-                const email = document.getElementById('vecinoEmail').value.trim();
-                const notas = document.getElementById('vecinoNotas').value.trim();
                 
                 if (!nombre || !piso) {
-                    alert('Completa nombre y piso');
+                    alert('Completa todos los campos');
                     return;
                 }
                 
                 this.data.vecinos.push({
                     id: Date.now(),
-                    nombre,
-                    piso,
-                    telefono,
-                    email,
-                    notas,
-                    fecha: new Date().toLocaleDateString('es-ES')
+                    nombre: nombre,
+                    piso: piso
                 });
                 
                 this.saveData();
-                this.renderVecinos();
                 document.getElementById('vecinoNombre').value = '';
                 document.getElementById('vecinoPiso').value = '';
-                document.getElementById('vecinoTelefono').value = '';
-                document.getElementById('vecinoEmail').value = '';
-                document.getElementById('vecinoNotas').value = '';
+                this.renderVecinos();
             },
             
-            renderVecinos(filtro = '') {
+            renderVecinos() {
                 const list = document.getElementById('vecinosList');
-                
-                if (this.data.vecinos.length === 0) {
-                    list.innerHTML = '<p style="color: #999;">No hay vecinos registrados</p>';
-                    return;
-                }
-                
-                let vecinos = this.data.vecinos;
-                if (filtro) {
-                    vecinos = vecinos.filter(v => 
-                        v.nombre.toLowerCase().includes(filtro.toLowerCase()) ||
-                        v.piso.toLowerCase().includes(filtro.toLowerCase())
-                    );
-                }
-                
-                list.innerHTML = `
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Nombre</th>
-                                <th>Piso</th>
-                                <th>Teléfono</th>
-                                <th>Email</th>
-                                <th>Notas</th>
-                                <th>Alta</th>
-                                ${!this.publicViewOnly ? '<th>Acciones</th>' : ''}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${vecinos.map(v => `
-                                <tr>
-                                    <td>${v.nombre}</td>
-                                    <td>${v.piso}</td>
-                                    <td>${v.telefono || '-'}</td>
-                                    <td>${v.email || '-'}</td>
-                                    <td>${v.notas || '-'}</td>
-                                    <td>${v.fecha}</td>
-                                    ${!this.publicViewOnly ? `
-                                        <td>
-                                            <button class="btn-small" onclick="app.abrirDialogoEditarVecino(${v.id})">✏️ Editar</button>
-                                            <button class="btn-small delete" onclick="app.deleteVecino(${v.id})">Eliminar</button>
-                                        </td>
-                                    ` : ''}
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                `;
+                list.innerHTML = this.data.vecinos.map(v => `
+                    <tr>
+                        <td>${v.nombre}</td>
+                        <td>${v.piso}</td>
+                        <td><button onclick="app.deleteVecino(${v.id})" style="padding: 4px 8px; background: #dc3545; font-size: 12px;">Eliminar</button></td>
+                    </tr>
+                `).join('');
             },
             
             deleteVecino(id) {
-                if (confirm('¿Eliminar este vecino?')) {
+                if (confirm('¿Eliminar?')) {
                     this.data.vecinos = this.data.vecinos.filter(v => v.id !== id);
                     this.saveData();
                     this.renderVecinos();
                 }
             },
             
-            abrirDialogoEditarVecino(id) {
-                const vecino = this.data.vecinos.find(v => v.id === id);
-                if (!vecino) return;
-                
-                const html = `
-                    <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000;">
-                        <div style="background: white; padding: 25px; border-radius: 8px; max-width: 400px; width: 90%; box-shadow: 0 4px 20px rgba(0,0,0,0.2);">
-                            <h2 style="margin-top: 0;">Editar vecino</h2>
-                            <div style="display: flex; flex-direction: column; gap: 12px;">
-                                <div>
-                                    <label style="font-weight: bold; display: block; margin-bottom: 5px;">Nombre</label>
-                                    <input type="text" id="editNombre" value="${vecino.nombre}" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;">
-                                </div>
-                                <div>
-                                    <label style="font-weight: bold; display: block; margin-bottom: 5px;">Piso</label>
-                                    <input type="text" id="editPiso" value="${vecino.piso}" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;">
-                                </div>
-                                <div>
-                                    <label style="font-weight: bold; display: block; margin-bottom: 5px;">Teléfono</label>
-                                    <input type="text" id="editTelefono" value="${vecino.telefono || ''}" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;">
-                                </div>
-                                <div>
-                                    <label style="font-weight: bold; display: block; margin-bottom: 5px;">Email</label>
-                                    <input type="email" id="editEmail" value="${vecino.email || ''}" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;">
-                                </div>
-                                <div>
-                                    <label style="font-weight: bold; display: block; margin-bottom: 5px;">Notas</label>
-                                    <textarea id="editNotas" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; min-height: 60px;">${vecino.notas || ''}</textarea>
-                                </div>
-                                <div>
-                                    <label style="font-weight: bold; display: block; margin-bottom: 5px;">Fecha de alta (dd/mm/yyyy)</label>
-                                    <input type="text" id="editFecha" value="${vecino.fecha}" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;">
-                                </div>
-                            </div>
-                            <div style="display: flex; gap: 10px; margin-top: 20px;">
-                                <button onclick="app.guardarVecino(${id})" style="flex: 1; padding: 10px; background: #667eea; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Guardar</button>
-                                <button onclick="app.cerrarDialogo()" style="flex: 1; padding: 10px; background: #ccc; color: black; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Cancelar</button>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                
-                document.body.insertAdjacentHTML('beforeend', html);
-            },
-            
-            guardarVecino(id) {
-                const vecino = this.data.vecinos.find(v => v.id === id);
-                if (!vecino) return;
-                
-                vecino.nombre = document.getElementById('editNombre').value.trim();
-                vecino.piso = document.getElementById('editPiso').value.trim();
-                vecino.telefono = document.getElementById('editTelefono').value.trim();
-                vecino.email = document.getElementById('editEmail').value.trim();
-                vecino.notas = document.getElementById('editNotas').value.trim();
-                vecino.fecha = document.getElementById('editFecha').value.trim();
-                
-                if (!vecino.nombre || !vecino.piso) {
-                    alert('Nombre y Piso son obligatorios');
-                    return;
-                }
-                
-                this.saveData();
-                this.renderVecinos();
-                this.cerrarDialogo();
-            },
-            
-            cerrarDialogo() {
-                const dialogo = document.querySelector('[style*="position: fixed"]');
-                if (dialogo) dialogo.remove();
-            },
-            
-            setupBuscadorVecinos() {
-                const buscador = document.getElementById('buscadorVecinos');
-                if (buscador) {
-                    buscador.addEventListener('input', (e) => {
-                        this.renderVecinos(e.target.value);
-                    });
-                }
-            },
-            
-            // CUOTAS
-            crearCuotaParaTodos() {
-                try {
-                    const mesElement = document.getElementById('cuotaMes');
-                    const importeElement = document.getElementById('cuotaImporte');
-                    const conceptoElement = document.getElementById('cuotaConcepto');
-                    
-                    const mes = mesElement.value;
-                    const importeStr = importeElement.value;
-                    const concepto = conceptoElement.value;
-                    
-                    console.log('Mes:', mes, 'Importe:', importeStr, 'Concepto:', concepto);
-                    
-                    if (!mes || mes.length === 0) {
-                        alert('❌ Selecciona un mes');
-                        return;
-                    }
-                    
-                    if (!importeStr || importeStr.length === 0) {
-                        alert('❌ Ingresa un importe');
-                        return;
-                    }
-                    
-                    if (!concepto || concepto.length === 0) {
-                        alert('❌ Ingresa un concepto');
-                        return;
-                    }
-                    
-                    const importe = parseFloat(importeStr.replace(',', '.'));
-                    
-                    if (isNaN(importe) || importe <= 0) {
-                        alert('❌ El importe debe ser un número mayor a 0 (ej: 50 o 50,50)');
-                        return;
-                    }
-                    
-                    if (this.data.vecinos.length === 0) {
-                        alert('❌ No hay vecinos registrados. Agrega vecinos primero en la sección 👥 Vecinos');
-                        return;
-                    }
-                    
-                    // Verificar si ya existe cuota en ese mes
-                    const cuotaExistente = this.data.cuotas.some(c => c.mes === mes && c.concepto === concepto);
-                    if (cuotaExistente) {
-                        alert('❌ Ya existe una cuota de este concepto en este período');
-                        return;
-                    }
-                    
-                    // Crear cuota para cada vecino
-                    let contador = 0;
-                    this.data.vecinos.forEach(vecino => {
-                        this.data.cuotas.push({
-                            id: Date.now() + Math.random(),
-                            vecinoId: vecino.id,
-                            mes: mes,
-                            importe: importe,
-                            concepto: concepto,
-                            estado: 'pendiente',
-                            fechaCreacion: new Date().toLocaleDateString('es-ES')
-                        });
-                        contador++;
-                    });
-                    
-                    this.saveData();
-                    console.log(`✓ Creadas ${contador} cuotas`);
-                    
-                    this.actualizarSelectsCuotas();
-                    this.renderReporteCuotas();
-                    
-                    // Limpiar formulario
-                    mesElement.value = '';
-                    importeElement.value = '';
-                    conceptoElement.value = '';
-                    
-                    alert(`✅ ¡Cuota creada!\n\nCreadas ${contador} cuotas para:\n- Período: ${mes}\n- Importe: €${importe.toFixed(2)}\n- Concepto: ${concepto}`);
-                    
-                    // Ir a la sección de cuotas
-                    document.querySelector('[onclick="app.showSection(\'cuotas\')"]').click();
-                    
-                } catch (error) {
-                    console.error('Error:', error);
-                    alert('❌ Error al crear la cuota: ' + error.message);
-                }
-            },
-            
-            actualizarSelectsCuotas() {
-                const selectVecino = document.getElementById('pagoVecino');
-                const selectCuota = document.getElementById('pagoCuota');
-                
-                if (selectVecino) {
-                    selectVecino.innerHTML = '<option value="">-- Selecciona un vecino --</option>' + 
-                        this.data.vecinos.map(v => `<option value="${v.id}">${v.nombre} (${v.piso})</option>`).join('');
-                    
-                    selectVecino.addEventListener('change', () => {
-                        this.actualizarCuotasPendientes(selectVecino.value);
-                    });
-                }
-            },
-            
-            actualizarCuotasPendientes(vecinoId) {
-                const selectCuota = document.getElementById('pagoCuota');
-                if (!selectCuota) return;
-                
-                const cuotasPendientes = this.data.cuotas.filter(c => 
-                    c.vecinoId == vecinoId && c.estado === 'pendiente'
-                );
-                
-                selectCuota.innerHTML = '<option value="">-- Selecciona cuota --</option>' +
-                    cuotasPendientes.map(c => `<option value="${c.id}">${c.mes} - ${c.concepto} (€${c.importe.toFixed(2)})</option>`).join('');
-            },
-            
-            convertirFechaFormato(fechaISO) {
-                // Convierte YYYY-MM-DD a dd/mm/yyyy
-                if (!fechaISO) return '';
-                const [año, mes, día] = fechaISO.split('-');
-                return `${día}/${mes}/${año}`;
-            },
-            
-                const vecinoId = document.getElementById('pagoVecino').value.trim();
-                const cuotaId = parseFloat(document.getElementById('pagoCuota').value);
-                const fechaPago = document.getElementById('pagoFecha').value.trim();
-                const importeRaw = document.getElementById('pagoImporte').value.trim();
-                const referencia = document.getElementById('pagoReferencia').value.trim();
-                
-                // Convertir coma a punto
-                const importe = parseFloat(importeRaw.replace(',', '.'));
-                
-                if (!vecinoId) {
-                    alert('Selecciona un vecino');
-                    return;
-                }
-                
-                if (!cuotaId || isNaN(cuotaId)) {
-                    alert('Selecciona una cuota');
-                    return;
-                }
-                
-                if (!fechaPago) {
-                    alert('Selecciona una fecha de pago');
-                    return;
-                }
-                
-                if (isNaN(importe) || importe <= 0) {
-                    alert('Ingresa un importe válido (ej: 50 o 50,50)');
-                    return;
-                }
-                
-                const cuota = this.data.cuotas.find(c => c.id === cuotaId);
-                if (!cuota) {
-                    alert('Cuota no encontrada');
-                    return;
-                }
-                
-                // Registrar pago
-                const idPago = Date.now();
-                this.data.pagos.push({
-                    id: idPago,
-                    cuotaId: cuotaId,
-                    vecinoId: vecinoId,
-                    fechaPago: fechaPago,
-                    importe: importe,
-                    referencia: referencia,
-                    fechaRegistro: new Date().toLocaleDateString('es-ES')
-                });
-                
-                // Marcar cuota como pagada
-                cuota.estado = 'pagada';
-                cuota.idPago = idPago;
-                
-                // ✨ AGREGAR AUTOMÁTICAMENTE COMO INGRESO EN GASTOS/INGRESOS
-                const vecino = this.data.vecinos.find(v => v.id == vecinoId);
-                this.data.gastos.push({
-                    id: Date.now() + Math.random(),
-                    fecha: this.convertirFechaFormato(fechaPago),  // Convertir formato
-                    concepto: `Pago cuota - ${vecino ? vecino.nombre : 'N/A'} (${cuota.concepto})`,
-                    categoria: 'Cuota',
-                    tipo: 'ingreso',
-                    amount: importe,
-                    referencia: referencia || 'Cuota'
-                });
-                
-                // ✨ GENERAR AUTOMÁTICAMENTE CUOTA DEL SIGUIENTE MES
-                this.generarCuotaSiguienteMes(cuota, vecinoId);
-                
-                this.saveData();
-                this.actualizarSelectsCuotas();
-                this.renderReporteCuotas();
-                this.renderGastos();  // Mostrar el nuevo ingreso
-                
-                document.getElementById('pagoVecino').value = '';
-                document.getElementById('pagoCuota').value = '';
-                document.getElementById('pagoFecha').value = '';
-                document.getElementById('pagoImporte').value = '';
-                document.getElementById('pagoReferencia').value = '';
-                
-                alert('✓ Pago registrado correctamente\n✓ Ingreso agregado a Gastos/Ingresos\n✓ Cuota del siguiente mes creada automáticamente');
-                this.generarRecibo(idPago);
-            },
-            
-            generarCuotaSiguienteMes(cuotaActual, vecinoId) {
-                // Calcular siguiente mes
-                const mesActual = cuotaActual.mes; // Formato: YYYY-MM
-                const [año, mes] = mesActual.split('-');
-                let mesNum = parseInt(mes);
-                let añoNum = parseInt(año);
-                
-                mesNum++;
-                if (mesNum > 12) {
-                    mesNum = 1;
-                    añoNum++;
-                }
-                
-                const siguienteMes = `${añoNum}-${String(mesNum).padStart(2, '0')}`;
-                
-                // Verificar que no existe ya
-                const cuotaExiste = this.data.cuotas.some(c => 
-                    c.vecinoId == vecinoId && c.mes === siguienteMes && c.concepto === cuotaActual.concepto
-                );
-                
-                if (!cuotaExiste) {
-                    // Crear cuota del siguiente mes
-                    this.data.cuotas.push({
-                        id: Date.now() + Math.random(),
-                        vecinoId: vecinoId,
-                        mes: siguienteMes,
-                        importe: cuotaActual.importe,
-                        concepto: cuotaActual.concepto,
-                        estado: 'pendiente',
-                        fechaCreacion: new Date().toLocaleDateString('es-ES')
-                    });
-                }
-            },
-            
-            renderReporteCuotas(mesFiltrro = '') {
-                const report = document.getElementById('reporteCuotas');
-                
-                if (this.data.cuotas.length === 0) {
-                    report.innerHTML = '<p style="color: #999;">No hay cuotas creadas</p>';
-                    return;
-                }
-                
-                let cuotasFiltridas = this.data.cuotas;
-                if (mesFiltrro) {
-                    cuotasFiltridas = this.data.cuotas.filter(c => c.mes === mesFiltrro);
-                }
-                
-                if (cuotasFiltridas.length === 0) {
-                    report.innerHTML = '<p style="color: #999;">No hay cuotas en este período</p>';
-                    return;
-                }
-                
-                // Agrupar por mes
-                const porMes = {};
-                cuotasFiltridas.forEach(c => {
-                    if (!porMes[c.mes]) porMes[c.mes] = [];
-                    porMes[c.mes].push(c);
-                });
-                
-                let html = '';
-                Object.keys(porMes).sort().reverse().forEach(mes => {
-                    const cuotasMes = porMes[mes];
-                    const pagadas = cuotasMes.filter(c => c.estado === 'pagada').length;
-                    const pendientes = cuotasMes.filter(c => c.estado === 'pendiente').length;
-                    const totalPagado = cuotasMes
-                        .filter(c => c.estado === 'pagada')
-                        .reduce((sum, c) => sum + c.importe, 0);
-                    
-                    html += `
-                        <div style="background: #f8f9fa; padding: 20px; border-radius: 5px; margin-bottom: 20px;">
-                            <h4>${mes}</h4>
-                            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 15px;">
-                                <div style="background: #d4edda; padding: 10px; border-radius: 3px; text-align: center;">
-                                    <p style="font-size: 12px; color: #155724;">Pagadas</p>
-                                    <p style="font-size: 18px; font-weight: bold; color: #155724;">${pagadas}/${cuotasMes.length}</p>
-                                </div>
-                                <div style="background: #fff3cd; padding: 10px; border-radius: 3px; text-align: center;">
-                                    <p style="font-size: 12px; color: #856404;">Pendientes</p>
-                                    <p style="font-size: 18px; font-weight: bold; color: #856404;">${pendientes}</p>
-                                </div>
-                                <div style="background: #d1ecf1; padding: 10px; border-radius: 3px; text-align: center;">
-                                    <p style="font-size: 12px; color: #0c5460;">Total Pagado</p>
-                                    <p style="font-size: 18px; font-weight: bold; color: #0c5460;">€${totalPagado.toFixed(2)}</p>
-                                </div>
-                            </div>
-                            
-                            <table style="width: 100%; font-size: 12px;">
-                                <thead>
-                                    <tr style="background: #e9ecef;">
-                                        <th style="padding: 8px; text-align: left;">Vecino</th>
-                                        <th style="padding: 8px; text-align: left;">Concepto</th>
-                                        <th style="padding: 8px; text-align: right;">Importe</th>
-                                        <th style="padding: 8px; text-align: center;">Estado</th>
-                                        <th style="padding: 8px; text-align: center;">Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${cuotasMes.map(c => {
-                                        const vecino = this.data.vecinos.find(v => v.id === c.vecinoId);
-                                        const pago = this.data.pagos.find(p => p.id === c.idPago);
-                                        return `
-                                            <tr style="border-bottom: 1px solid #ddd;">
-                                                <td style="padding: 8px;">${vecino ? vecino.nombre : 'N/A'}</td>
-                                                <td style="padding: 8px;">${c.concepto}</td>
-                                                <td style="padding: 8px; text-align: right; cursor: pointer; color: #667eea;" onclick="app.editarCuota(${c.id})">€${c.importe.toFixed(2)} ✏️</td>
-                                                <td style="padding: 8px; text-align: center;">
-                                                    <span style="padding: 3px 8px; border-radius: 3px; font-size: 11px; background: ${c.estado === 'pagada' ? '#d4edda; color: #155724;' : '#fff3cd; color: #856404;'}">
-                                                        ${c.estado.toUpperCase()}
-                                                    </span>
-                                                </td>
-                                                <td style="padding: 8px; text-align: center;">
-                                                    ${c.estado === 'pagada' && pago ? `
-                                                        <button class="btn-small" onclick="app.mostrarRecibo(${c.idPago})" style="font-size: 11px;">📄 Recibo</button>
-                                                        <button class="btn-small" onclick="app.abrirDialogoEditarPago(${c.id})" style="font-size: 11px;">✏️ Editar</button>
-                                                    ` : ''}
-                                                    ${!this.publicViewOnly && c.estado === 'pagada' ? `
-                                                        <button class="btn-small delete" onclick="app.anularPago(${c.id})" style="font-size: 11px;">Anular</button>
-                                                    ` : ''}
-                                                </td>
-                                            </tr>
-                                        `;
-                                    }).join('')}
-                                </tbody>
-                            </table>
-                        </div>
-                    `;
-                });
-                
-                report.innerHTML = html;
-            },
-            
-            generarRecibo(idPago) {
-                const pago = this.data.pagos.find(p => p.id === idPago);
-                if (!pago) return;
-                
-                const cuota = this.data.cuotas.find(c => c.id === pago.cuotaId);
-                const vecino = this.data.vecinos.find(v => v.id === pago.vecinoId);
-                
-                if (!cuota || !vecino) return;
-                
-                const recibo = `
-                    ╔════════════════════════════════════════╗
-                    ║         RECIBO DE PAGO                 ║
-                    ║     ${this.data.nombre}        ║
-                    ╚════════════════════════════════════════╝
-                    
-                    Recibo Nº: ${String(idPago).slice(-6)}
-                    Fecha: ${pago.fechaPago}
-                    
-                    ──────────────────────────────────────────
-                    DATOS DEL VECINO
-                    ──────────────────────────────────────────
-                    Nombre: ${vecino.nombre}
-                    Piso: ${vecino.piso}
-                    
-                    ──────────────────────────────────────────
-                    DETALLES DEL PAGO
-                    ──────────────────────────────────────────
-                    Período: ${cuota.mes}
-                    Concepto: ${cuota.concepto}
-                    Importe: €${pago.importe.toFixed(2)}
-                    Referencia: ${pago.referencia || 'N/A'}
-                    
-                    ──────────────────────────────────────────
-                    ESTADO: ✓ PAGADO
-                    ──────────────────────────────────────────
-                    
-                    Fecha de Registro: ${pago.fechaRegistro}
-                    
-                    Gracias por su pago.
-                    ════════════════════════════════════════
-                `;
-                
-                console.log(recibo);
-                alert(recibo);
-            },
-            
-            mostrarRecibo(idPago) {
-                this.generarRecibo(idPago);
-            },
-            
-            anularPago(cuotaId) {
-                if (confirm('¿Anular este pago?')) {
-                    const cuota = this.data.cuotas.find(c => c.id === cuotaId);
-                    if (cuota) {
-                        const idPago = cuota.idPago;
-                        cuota.estado = 'pendiente';
-                        delete cuota.idPago;
-                        this.data.pagos = this.data.pagos.filter(p => p.id !== idPago);
-                        this.saveData();
-                        this.renderReporteCuotas();
-                        alert('Pago anulado ✓');
-                    }
-                }
-            },
-            
-            editarCuota(cuotaId) {
-                const cuota = this.data.cuotas.find(c => c.id === cuotaId);
-                if (!cuota) return;
-                
-                const nuevoImporte = prompt('Nuevo importe (€):', cuota.importe.toString());
-                if (nuevoImporte !== null) {
-                    const importe = parseFloat(nuevoImporte.replace(',', '.'));
-                    if (!isNaN(importe) && importe > 0) {
-                        cuota.importe = importe;
-                        this.saveData();
-                        this.renderReporteCuotas();
-                    } else {
-                        alert('Importe inválido');
-                    }
-                }
-            },
-            
-            abrirDialogoEditarPago(cuotaId) {
-                const cuota = this.data.cuotas.find(c => c.id === cuotaId);
-                const pago = this.data.pagos.find(p => p.id === cuota.idPago);
-                
-                if (!pago) return;
-                
-                const html = `
-                    <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000;">
-                        <div style="background: white; padding: 25px; border-radius: 8px; max-width: 400px; width: 90%; box-shadow: 0 4px 20px rgba(0,0,0,0.2);">
-                            <h2 style="margin-top: 0;">Editar pago</h2>
-                            <div style="display: flex; flex-direction: column; gap: 12px;">
-                                <div>
-                                    <label style="font-weight: bold; display: block; margin-bottom: 5px;">Fecha de pago (yyyy-mm-dd)</label>
-                                    <input type="text" id="editFechaPago" value="${pago.fechaPago}" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;">
-                                </div>
-                                <div>
-                                    <label style="font-weight: bold; display: block; margin-bottom: 5px;">Importe pagado (€)</label>
-                                    <input type="text" id="editImportePago" value="${pago.importe.toFixed(2)}" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;">
-                                </div>
-                                <div>
-                                    <label style="font-weight: bold; display: block; margin-bottom: 5px;">Referencia (opcional)</label>
-                                    <input type="text" id="editReferenciaPago" value="${pago.referencia || ''}" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;">
-                                </div>
-                            </div>
-                            <div style="display: flex; gap: 10px; margin-top: 20px;">
-                                <button onclick="app.guardarPago(${cuotaId})" style="flex: 1; padding: 10px; background: #667eea; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Guardar</button>
-                                <button onclick="app.cerrarDialogo()" style="flex: 1; padding: 10px; background: #ccc; color: black; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Cancelar</button>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                
-                document.body.insertAdjacentHTML('beforeend', html);
-            },
-            
-            guardarPago(cuotaId) {
-                const cuota = this.data.cuotas.find(c => c.id === cuotaId);
-                const pago = this.data.pagos.find(p => p.id === cuota.idPago);
-                
-                if (!pago) return;
-                
-                pago.fechaPago = document.getElementById('editFechaPago').value.trim();
-                pago.referencia = document.getElementById('editReferenciaPago').value.trim();
-                
-                const importe = parseFloat(document.getElementById('editImportePago').value.replace(',', '.'));
-                
-                if (isNaN(importe) || importe <= 0) {
-                    alert('Importe inválido');
-                    return;
-                }
-                
-                pago.importe = importe;
-                this.saveData();
-                this.renderReporteCuotas();
-                this.cerrarDialogo();
-            },
-            
-            // ANUNCIOS
-            addAnuncio() {
-                const titulo = document.getElementById('anuncioTitulo').value.trim();
-                const mensaje = document.getElementById('anuncioMensaje').value.trim();
-                const urgencia = document.getElementById('anuncioUrgencia').value;
-                
-                if (!titulo || !mensaje) {
-                    alert('Completa todos los campos');
-                    return;
-                }
-                
-                this.data.anuncios.unshift({
-                    id: Date.now(),
-                    titulo,
-                    mensaje,
-                    urgencia,
-                    fecha: new Date().toLocaleString('es-ES')
-                });
-                
-                this.saveData();
-                this.renderAnuncios();
-                document.getElementById('anuncioTitulo').value = '';
-                document.getElementById('anuncioMensaje').value = '';
-            },
-            
-            renderAnuncios() {
-                const list = document.getElementById('anunciosList');
-                if (this.data.anuncios.length === 0) {
-                    list.innerHTML = '<p style="color: #999;">No hay anuncios</p>';
-                    return;
-                }
-                
-                list.innerHTML = this.data.anuncios.map(a => `
-                    <div class="item-card" style="border-left-color: ${a.urgencia === 'urgente' ? '#dc3545' : a.urgencia === 'importante' ? '#ffc107' : '#667eea'};">
-                        <h4>${a.titulo} <span style="font-size: 12px;">[${a.urgencia}]</span></h4>
-                        <p>${a.mensaje}</p>
-                        <div class="date">${a.fecha}</div>
-                        ${!this.publicViewOnly ? `<button class="btn-small delete" onclick="app.deleteAnuncio(${a.id})">Eliminar</button>` : ''}
-                    </div>
-                `).join('');
-            },
-            
-            deleteAnuncio(id) {
-                this.data.anuncios = this.data.anuncios.filter(a => a.id !== id);
-                this.saveData();
-                this.renderAnuncios();
-            },
-            
-            // GASTOS
-            addGasto() {
-                const tipo = document.getElementById('gastoTipo').value;
-                const categoria = document.getElementById('gastoCategoria').value;
-                const concepto = document.getElementById('gastoConcepto').value.trim();
-                const amountRaw = document.getElementById('gastoAmount').value.trim();
-                
-                // Convertir coma a punto
-                const amount = parseFloat(amountRaw.replace(',', '.'));
-                
-                if (!concepto) {
-                    alert('Ingresa un concepto');
-                    return;
-                }
-                
-                if (isNaN(amount) || amount <= 0) {
-                    alert('Ingresa un importe válido (ej: 50 o 50,50)');
-                    return;
-                }
-                
-                this.data.gastos.unshift({
-                    id: Date.now(),
-                    tipo,
-                    categoria,
-                    concepto,
-                    amount,
-                    fecha: new Date().toLocaleDateString('es-ES')
-                });
-                
-                this.saveData();
-                this.renderGastos();
-                document.getElementById('gastoConcepto').value = '';
-                document.getElementById('gastoAmount').value = '';
-            },
-            
-            renderGastos() {
-                const list = document.getElementById('gastosList');
-                const resumen = document.getElementById('gastosResumen');
-                
-                if (this.data.gastos.length === 0) {
-                    list.innerHTML = '<p style="color: #999;">No hay movimientos</p>';
-                    resumen.innerHTML = '';
-                    return;
-                }
-                
-                const totales = { gastos: 0, ingresos: 0 };
-                this.data.gastos.forEach(g => {
-                    if (g.tipo === 'gasto') totales.gastos += g.amount;
-                    else totales.ingresos += g.amount;
-                });
-                
-                const saldo = totales.ingresos - totales.gastos;
-                
-                resumen.innerHTML = `
-                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
-                        <div style="background: #d4edda; padding: 15px; border-radius: 5px;">
-                            <p style="font-size: 12px;">Ingresos</p>
-                            <p style="font-size: 20px; font-weight: bold; color: #155724;">€${totales.ingresos.toFixed(2)}</p>
-                        </div>
-                        <div style="background: #f8d7da; padding: 15px; border-radius: 5px;">
-                            <p style="font-size: 12px;">Gastos</p>
-                            <p style="font-size: 20px; font-weight: bold; color: #721c24;">€${totales.gastos.toFixed(2)}</p>
-                        </div>
-                        <div style="background: ${saldo >= 0 ? '#d1ecf1' : '#f8d7da'}; padding: 15px; border-radius: 5px;">
-                            <p style="font-size: 12px;">Saldo</p>
-                            <p style="font-size: 20px; font-weight: bold; color: ${saldo >= 0 ? '#0c5460' : '#721c24'};">€${saldo.toFixed(2)}</p>
-                        </div>
-                    </div>
-                `;
-                
-                list.innerHTML = `
-                    <table>
-                        <thead><tr><th>Fecha</th><th>Concepto</th><th>Categoría</th><th>Tipo</th><th>Cantidad</th>${!this.publicViewOnly ? '<th>Acciones</th>' : ''}</tr></thead>
-                        <tbody>
-                            ${this.data.gastos.map(g => `
-                                <tr>
-                                    <td>${g.fecha}</td>
-                                    <td>${g.concepto}</td>
-                                    <td>${g.categoria}</td>
-                                    <td style="color: ${g.tipo === 'gasto' ? '#dc3545' : '#28a745'}; font-weight: bold;">${g.tipo}</td>
-                                    <td style="color: ${g.tipo === 'gasto' ? '#dc3545' : '#28a745'}; font-weight: bold;">€${g.amount.toFixed(2)}</td>
-                                    ${!this.publicViewOnly ? `<td><button class="btn-small" onclick="app.abrirDialogoEditarGasto(${g.id})">✏️ Editar</button><button class="btn-small delete" onclick="app.deleteGasto(${g.id})">Eliminar</button></td>` : ''}
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                `;
-            },
-            
-            deleteGasto(id) {
-                this.data.gastos = this.data.gastos.filter(g => g.id !== id);
-                this.saveData();
-                this.renderGastos();
-            },
-            
-            abrirDialogoEditarGasto(id) {
-                const gasto = this.data.gastos.find(g => g.id === id);
-                if (!gasto) return;
-                
-                const html = `
-                    <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000;">
-                        <div style="background: white; padding: 25px; border-radius: 8px; max-width: 400px; width: 90%; box-shadow: 0 4px 20px rgba(0,0,0,0.2);">
-                            <h2 style="margin-top: 0;">Editar movimiento</h2>
-                            <div style="display: flex; flex-direction: column; gap: 12px;">
-                                <div>
-                                    <label style="font-weight: bold; display: block; margin-bottom: 5px;">Fecha (dd/mm/yyyy)</label>
-                                    <input type="text" id="editFechaGasto" value="${gasto.fecha}" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;">
-                                </div>
-                                <div>
-                                    <label style="font-weight: bold; display: block; margin-bottom: 5px;">Concepto</label>
-                                    <input type="text" id="editConceptoGasto" value="${gasto.concepto}" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;">
-                                </div>
-                                <div>
-                                    <label style="font-weight: bold; display: block; margin-bottom: 5px;">Importe (€)</label>
-                                    <input type="text" id="editImporteGasto" value="${gasto.amount.toFixed(2)}" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;">
-                                </div>
-                            </div>
-                            <div style="display: flex; gap: 10px; margin-top: 20px;">
-                                <button onclick="app.guardarGasto(${id})" style="flex: 1; padding: 10px; background: #667eea; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Guardar</button>
-                                <button onclick="app.cerrarDialogo()" style="flex: 1; padding: 10px; background: #ccc; color: black; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Cancelar</button>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                
-                document.body.insertAdjacentHTML('beforeend', html);
-            },
-            
-            guardarGasto(id) {
-                const gasto = this.data.gastos.find(g => g.id === id);
-                if (!gasto) return;
-                
-                gasto.fecha = document.getElementById('editFechaGasto').value.trim();
-                gasto.concepto = document.getElementById('editConceptoGasto').value.trim();
-                
-                const importe = parseFloat(document.getElementById('editImporteGasto').value.replace(',', '.'));
-                
-                if (!gasto.concepto) {
-                    alert('El concepto es obligatorio');
-                    return;
-                }
-                
-                if (isNaN(importe) || importe <= 0) {
-                    alert('Importe inválido');
-                    return;
-                }
-                
-                gasto.amount = importe;
-                this.saveData();
-                this.renderGastos();
-                this.cerrarDialogo();
-            },
-            
-            // ESPACIOS
-            addEspacio() {
-                const nombre = document.getElementById('espacioNombre').value.trim();
-                if (!nombre) {
-                    alert('Ingresa el nombre del espacio');
-                    return;
-                }
-                
-                const capacidadRaw = document.getElementById('espacioCapacidad').value.trim();
-                const capacidad = capacidadRaw ? parseInt(capacidadRaw) : 0;
-                
-                const tarifaRaw = document.getElementById('espacioTarifa').value.trim();
-                const tarifa = tarifaRaw ? parseFloat(tarifaRaw.replace(',', '.')) : 0;
-                
-                this.data.espacios.push({
-                    id: Date.now(),
-                    nombre,
-                    descripcion: document.getElementById('espacioDescripcion').value,
-                    capacidad: capacidad,
-                    tarifa: tarifa
-                });
-                
-                this.saveData();
-                this.renderEspacios();
-                this.updateReservaEspacios();
-                document.getElementById('espacioNombre').value = '';
-                document.getElementById('espacioDescripcion').value = '';
-                document.getElementById('espacioCapacidad').value = '';
-                document.getElementById('espacioTarifa').value = '';
-            },
-            
-            addReserva() {
-                const espacioId = parseInt(document.getElementById('reservaEspacio').value);
-                const fecha = document.getElementById('reservaFecha').value;
-                const horaInicio = document.getElementById('reservaHoraInicio').value;
-                const horaFin = document.getElementById('reservaHoraFin').value;
-                const vecino = document.getElementById('reservaVecino').value.trim();
-                
-                if (!espacioId || !fecha || !horaInicio || !horaFin || !vecino) {
-                    alert('Completa todos los campos');
-                    return;
-                }
-                
-                this.data.reservas.push({
-                    id: Date.now(),
-                    espacioId,
-                    fecha,
-                    horaInicio,
-                    horaFin,
-                    vecino
-                });
-                
-                this.saveData();
-                this.renderEspacios();
-            },
-            
-            updateReservaEspacios() {
-                const select = document.getElementById('reservaEspacio');
-                select.innerHTML = this.data.espacios.map(e => `<option value="${e.id}">${e.nombre}</option>`).join('');
-            },
-            
-            renderEspacios() {
-                const list = document.getElementById('espaciosList');
-                
-                if (this.data.espacios.length === 0) {
-                    list.innerHTML = '<p style="color: #999;">No hay espacios</p>';
-                    return;
-                }
-                
-                let html = '';
-                this.data.espacios.forEach(e => {
-                    const reservas = this.data.reservas.filter(r => r.espacioId === e.id);
-                    html += `
-                        <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; margin-bottom: 15px;">
-                            <h4>${e.nombre}</h4>
-                            <p>${e.descripcion}</p>
-                            <p style="font-size: 12px; color: #666;">Capacidad: ${e.capacidad} | Tarifa: €${e.tarifa.toFixed(2)}/h</p>
-                            ${!this.publicViewOnly ? `<button class="btn-small delete" onclick="app.deleteEspacio(${e.id})">Eliminar</button>` : ''}
-                            <h5 style="margin-top: 10px; margin-bottom: 8px;">Reservas:</h5>
-                            ${reservas.length === 0 ? '<p style="color: #999; font-size: 12px;">Sin reservas</p>' : `<ul style="margin-left: 20px; font-size: 12px;">
-                                ${reservas.map(r => `<li>${r.fecha} ${r.horaInicio}-${r.horaFin}: ${r.vecino} ${!this.publicViewOnly ? `<button class="btn-small delete" onclick="app.deleteReserva(${r.id})">X</button>` : ''}</li>`).join('')}
-                            </ul>`}
-                        </div>
-                    `;
-                });
-                list.innerHTML = html;
-            },
-            
-            deleteEspacio(id) {
-                this.data.espacios = this.data.espacios.filter(e => e.id !== id);
-                this.data.reservas = this.data.reservas.filter(r => r.espacioId !== id);
-                this.saveData();
-                this.renderEspacios();
-                this.updateReservaEspacios();
-            },
-            
-            deleteReserva(id) {
-                this.data.reservas = this.data.reservas.filter(r => r.id !== id);
-                this.saveData();
-                this.renderEspacios();
-            },
-            
-            // DOCUMENTOS
-            addDocumento() {
-                const titulo = document.getElementById('docTitulo').value.trim();
-                const tipo = document.getElementById('docTipo').value;
-                const contenido = document.getElementById('docContenido').value.trim();
-                const archivoInput = document.getElementById('docArchivo');
-                
-                if (!titulo) {
-                    alert('Completa el título');
-                    return;
-                }
-                
-                const archivo = archivoInput.files[0]; // Solo tomar el primer archivo
-                
-                if (!archivo && !contenido) {
-                    alert('Adjunta un archivo o añade una descripción');
-                    return;
-                }
-                
-                if (archivo) {
-                    // Validar que sea un archivo, no una carpeta
-                    if (!archivo.type || archivo.type === '') {
-                        // Si no tiene tipo MIME, probablemente sea una carpeta
-                        if (archivo.name.indexOf('.') === -1) {
-                            alert('❌ No se pueden subir carpetas. Por favor selecciona un archivo individual.');
-                            return;
-                        }
-                    }
-                    
-                    // Validar extensión
-                    const extensionesPermitidas = ['.pdf', '.jpg', '.jpeg', '.png', '.xlsx', '.xls', '.doc', '.docx', '.txt', '.gif', '.bmp'];
-                    const extension = '.' + archivo.name.split('.').pop().toLowerCase();
-                    
-                    if (!extensionesPermitidas.includes(extension)) {
-                        alert('❌ Tipo de archivo no permitido.\nFormatos válidos: PDF, JPG, PNG, Excel, Word, TXT, GIF, BMP');
-                        return;
-                    }
-                    
-                    // Verificar tamaño máximo (5MB)
-                    if (archivo.size > 5 * 1024 * 1024) {
-                        alert('❌ El archivo es demasiado grande.\nTamaño máximo: 5MB\nTamaño de tu archivo: ' + (archivo.size / (1024 * 1024)).toFixed(2) + ' MB');
-                        return;
-                    }
-                    
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        const archivoData = {
-                            id: Date.now(),
-                            titulo,
-                            tipo,
-                            contenido,
-                            fecha: new Date().toLocaleDateString('es-ES'),
-                            archivo: {
-                                nombre: archivo.name,
-                                tipo: archivo.type,
-                                tamaño: archivo.size,
-                                data: e.target.result // Base64
-                            }
-                        };
-                        
-                        this.data.documentos.unshift(archivoData);
-                        this.saveData();
-                        this.renderDocumentos();
-                        
-                        // Limpiar formulario
-                        document.getElementById('docTitulo').value = '';
-                        document.getElementById('docContenido').value = '';
-                        document.getElementById('docArchivo').value = '';
-                        
-                        alert('✅ Documento compartido correctamente\n\nArchivo: ' + archivo.name + '\nTamaño: ' + (archivo.size / 1024).toFixed(2) + ' KB');
-                    };
-                    
-                    reader.onerror = () => {
-                        alert('❌ Error al leer el archivo. Intenta de nuevo.');
-                    };
-                    
-                    reader.readAsDataURL(archivo);
-                } else {
-                    // Solo texto, sin archivo
-                    this.data.documentos.unshift({
-                        id: Date.now(),
-                        titulo,
-                        tipo,
-                        contenido,
-                        fecha: new Date().toLocaleDateString('es-ES'),
-                        archivo: null
-                    });
-                    
-                    this.saveData();
-                    this.renderDocumentos();
-                    
-                    document.getElementById('docTitulo').value = '';
-                    document.getElementById('docContenido').value = '';
-                    
-                    alert('✅ Documento compartido correctamente');
-                }
-            },
-            
-            renderDocumentos() {
-                const list = document.getElementById('documentosList');
-                
-                if (this.data.documentos.length === 0) {
-                    list.innerHTML = '<p style="color: #999;">No hay documentos</p>';
-                    return;
-                }
-                
-                list.innerHTML = this.data.documentos.map(d => `
-                    <div class="item-card">
-                        <h4>${d.titulo}</h4>
-                        <p style="font-size: 12px; color: #999;">Tipo: ${d.tipo} | Fecha: ${d.fecha}</p>
-                        
-                        ${d.archivo ? `
-                            <div style="background: #e8f4f8; padding: 10px; border-radius: 3px; margin-bottom: 10px; border-left: 3px solid #17a2b8;">
-                                <p style="font-size: 12px; margin: 0;">
-                                    📎 ${d.archivo.nombre}<br>
-                                    Tamaño: ${(d.archivo.tamaño / 1024).toFixed(2)} KB
-                                </p>
-                                <button class="btn-small" onclick="app.descargarArchivo(${d.id})" style="margin-top: 8px; background: #17a2b8;">⬇️ Descargar</button>
-                            </div>
-                        ` : ''}
-                        
-                        ${d.contenido ? `
-                            <div style="background: white; padding: 10px; border: 1px solid #ddd; border-radius: 3px; max-height: 150px; overflow-y: auto;">
-                                ${d.contenido}
-                            </div>
-                        ` : ''}
-                        
-                        ${!this.publicViewOnly ? `<button class="btn-small delete" style="margin-top: 10px;" onclick="app.deleteDocumento(${d.id})">Eliminar</button>` : ''}
-                    </div>
-                `).join('');
-            },
-            
-            descargarArchivo(docId) {
-                const doc = this.data.documentos.find(d => d.id === docId);
-                if (!doc || !doc.archivo) return;
-                
-                const link = document.createElement('a');
-                link.href = doc.archivo.data;
-                link.download = doc.archivo.nombre;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            },
-            
-            deleteDocumento(id) {
-                this.data.documentos = this.data.documentos.filter(d => d.id !== id);
-                this.saveData();
-                this.renderDocumentos();
-            },
-            
-            // CONFIGURACIÓN
-            loadConfig() {
-                const configNombre = document.getElementById('configNombre');
-                // Los inputs del código están ocultos pero siguen existiendo
-                const configCodigoActual = document.getElementById('configCodigoActual');
-                
-                if (configNombre) configNombre.value = this.data.nombre;
-                if (configCodigoActual) {
-                    configCodigoActual.value = this.data.codigoActivacion || '';
-                }
-            },
-            
-            copiarCodigo() {
-                const codigo = document.getElementById('configCodigoActual');
-                if (codigo.value === 'No configurado') {
-                    alert('Configura primero un código de activación');
-                    return;
-                }
-                codigo.select();
-                document.execCommand('copy');
-                alert('✓ Código copiado al portapapeles');
-            },
-            
             saveConfig() {
-                const nombre = document.getElementById('configNombre').value.trim();
-                const codigoNuevo = document.getElementById('configCodigoNuevo').value.trim();
-                const password = document.getElementById('configPassword').value;
-                const passwordConfirm = document.getElementById('configPasswordConfirm').value;
+                const pwd = document.getElementById('newPassword').value;
+                const pwd2 = document.getElementById('confirmPassword').value;
                 
-                // Validar contraseña
-                if (password && password !== passwordConfirm) {
-                    alert('❌ Las contraseñas no coinciden');
+                if (!pwd) {
+                    alert('Ingresa una contraseña');
                     return;
                 }
                 
-                if (password && password.length < 4) {
-                    alert('❌ La contraseña debe tener mínimo 4 caracteres');
+                if (pwd !== pwd2) {
+                    alert('Las contraseñas no coinciden');
                     return;
                 }
                 
-                // Validar código de activación
-                if (codigoNuevo && codigoNuevo.length < 4) {
-                    alert('❌ El código debe tener mínimo 4 caracteres');
-                    return;
-                }
-                
-                // Actualizar datos
-                this.data.nombre = nombre || this.data.nombre;
-                
-                if (codigoNuevo) {
-                    this.data.codigoActivacion = codigoNuevo;
-                }
-                
-                if (password) {
-                    this.data.password = btoa(password);
-                }
-                
+                this.data.password = btoa(pwd);
                 this.saveData();
-                
-                // Limpiar formulario
-                document.getElementById('configCodigoNuevo').value = '';
-                document.getElementById('configPassword').value = '';
-                document.getElementById('configPasswordConfirm').value = '';
-                
-                // Recargar código
-                this.loadConfig();
-                
-                alert('✅ Cambios guardados correctamente');
+                document.getElementById('newPassword').value = '';
+                document.getElementById('confirmPassword').value = '';
+                alert('✓ Contraseña guardada');
             },
             
             exportData() {
                 const json = JSON.stringify(this.data, null, 2);
-                const blob = new Blob([json], { type: 'application/json' });
+                const blob = new Blob([json], {type: 'application/json'});
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = 'comunidad-backup-' + new Date().toISOString().split('T')[0] + '.json';
+                a.download = 'backup-' + new Date().toISOString().split('T')[0] + '.json';
                 a.click();
-            },
-            
-            clearAllData() {
-                if (confirm('⚠️ ¿SEGURO? Se borrarán TODOS los datos.')) {
-                    if (confirm('Confirma una vez más')) {
-                        this.data = {
-                            password: null,
-                            codigoActivacion: null,
-                            nombre: 'Comunidad de Vecinos',
-                            vecinos: [],
-                            cuotas: [],
-                            pagos: [],
-                            anuncios: [],
-                            gastos: [],
-                            espacios: [],
-                            reservas: [],
-                            documentos: []
-                        };
-                        this.saveData();
-                        location.reload();
-                    }
-                }
-            },
-            
-            // RENDER ALL
-            renderAll() {
-                this.renderVecinos();
-                this.actualizarSelectsCuotas();
-                this.renderReporteCuotas();
-                this.renderAnuncios();
-                this.renderGastos();
-                this.renderEspacios();
-                this.renderDocumentos();
-                this.updateReservaEspacios();
-                this.renderDashboard();
-                this.setupBuscadorVecinos();
-            },
-            
-            renderDashboard() {
-                const stats = document.getElementById('statsGrid');
-                const totalVecinos = this.data.vecinos.length;
-                const totalAnuncios = this.data.anuncios.length;
-                const totalGastos = this.data.gastos.reduce((a, g) => a + (g.tipo === 'gasto' ? g.amount : -g.amount), 0);
-                const totalEspacios = this.data.espacios.length;
-                const totalReservas = this.data.reservas.length;
-                const cuotasPagadas = this.data.cuotas.filter(c => c.estado === 'pagada').length;
-                const cuotasPendientes = this.data.cuotas.filter(c => c.estado === 'pendiente').length;
-                const totalPagado = this.data.pagos.reduce((sum, p) => sum + p.importe, 0);
-                
-                stats.innerHTML = `
-                    <div class="stat-card">
-                        <p>👥 Vecinos</p>
-                        <h3>${totalVecinos}</h3>
-                    </div>
-                    <div class="stat-card">
-                        <p>💳 Cuotas Pagadas</p>
-                        <h3>${cuotasPagadas}</h3>
-                    </div>
-                    <div class="stat-card">
-                        <p>⏳ Cuotas Pendientes</p>
-                        <h3>${cuotasPendientes}</h3>
-                    </div>
-                    <div class="stat-card">
-                        <p>💰 Total Recaudado</p>
-                        <h3>€${totalPagado.toFixed(2)}</h3>
-                    </div>
-                    <div class="stat-card">
-                        <p>📢 Anuncios</p>
-                        <h3>${totalAnuncios}</h3>
-                    </div>
-                    <div class="stat-card">
-                        <p>🏠 Espacios</p>
-                        <h3>${totalEspacios}</h3>
-                    </div>
-                `;
             }
         };
         
         document.addEventListener('DOMContentLoaded', () => {
             app.init();
+        });
+        
+        document.getElementById('passwordInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') app.login();
         });
     </script>
 </body>
