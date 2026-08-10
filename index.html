@@ -847,6 +847,12 @@
                         console.log('Error loading data');
                     }
                 }
+                
+                // Asegurar que siempre haya código de activación por defecto
+                if (!this.data.codigoActivacion) {
+                    this.data.codigoActivacion = 'admin' + Math.random().toString(36).substring(2, 8).toUpperCase();
+                    this.saveData();
+                }
             },
             
             saveData() {
