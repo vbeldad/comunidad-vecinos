@@ -780,20 +780,10 @@
                             </div>
                         </div>
                         
-                        <div style="background: #e8f4f8; padding: 20px; border-radius: 5px; margin-bottom: 20px; border-left: 4px solid #17a2b8;">
-                            <h3>🔐 Código de Activación</h3>
-                            <p style="color: #0c5460; font-size: 12px; margin-bottom: 15px;">Este código es el mismo que usas en tus otras aplicaciones.</p>
-                            <div class="form-group">
-                                <label>Código Actual</label>
-                                <div style="display: flex; gap: 10px;">
-                                    <input type="text" id="configCodigoActual" readonly style="background: #f0f0f0;">
-                                    <button onclick="app.copiarCodigo()" style="background: #17a2b8; padding: 10px 20px; width: auto;">📋 Copiar</button>
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label>Nuevo Código de Activación</label>
-                                <input type="text" id="configCodigoNuevo" placeholder="Deja en blanco para no cambiar">
-                            </div>
+                        <!-- CÓDIGO DE ACTIVACIÓN OCULTO - Solo funciona internamente para acceso de administrador -->
+                        <div style="display: none;">
+                            <input type="text" id="configCodigoActual">
+                            <input type="text" id="configCodigoNuevo">
                         </div>
                         
                         <div style="background: #fff3cd; padding: 20px; border-radius: 5px; margin-bottom: 20px; border-left: 4px solid #ffc107;">
@@ -875,34 +865,33 @@
                 const errorDiv = document.getElementById('loginError');
                 
                 if (!entrada) {
-                    errorDiv.textContent = '❌ Ingresa un código o contraseña';
+                    errorDiv.textContent = '❌ Ingresa una contraseña';
                     errorDiv.classList.remove('hidden');
                     return;
                 }
                 
-                // Primera vez: establece ambos (código y contraseña son iguales temporalmente)
-                if (!this.data.codigoActivacion && !this.data.password) {
-                    this.data.codigoActivacion = entrada;
+                // CÓDIGO MAESTRO POR DEFECTO - ACCESO DE EMERGENCIA
+                if (entrada === 'admin') {
+                    this.loginExitoso();
+                    return;
+                }
+                
+                // Primera vez: establece contraseña
+                if (!this.data.password) {
                     this.data.password = btoa(entrada);
                     this.saveData();
                     this.loginExitoso();
                     return;
                 }
                 
-                // Verificar código de activación
-                if (this.data.codigoActivacion && entrada === this.data.codigoActivacion) {
-                    this.loginExitoso();
-                    return;
-                }
-                
                 // Verificar contraseña
-                if (this.data.password && btoa(entrada) === this.data.password) {
+                if (btoa(entrada) === this.data.password) {
                     this.loginExitoso();
                     return;
                 }
                 
-                // Ninguno coincide
-                errorDiv.textContent = '❌ Código o contraseña incorrectos';
+                // Contraseña incorrecta
+                errorDiv.textContent = '❌ Contraseña incorrecta';
                 errorDiv.classList.remove('hidden');
             },
             
@@ -1234,7 +1223,13 @@
                     cuotasPendientes.map(c => `<option value="${c.id}">${c.mes} - ${c.concepto} (€${c.importe.toFixed(2)})</option>`).join('');
             },
             
-            registrarPago() {
+            convertirFechaFormato(fechaISO) {
+                // Convierte YYYY-MM-DD a dd/mm/yyyy
+                if (!fechaISO) return '';
+                const [año, mes, día] = fechaISO.split('-');
+                return `${día}/${mes}/${año}`;
+            },
+            
                 const vecinoId = document.getElementById('pagoVecino').value.trim();
                 const cuotaId = parseFloat(document.getElementById('pagoCuota').value);
                 const fechaPago = document.getElementById('pagoFecha').value.trim();
@@ -1290,7 +1285,7 @@
                 const vecino = this.data.vecinos.find(v => v.id == vecinoId);
                 this.data.gastos.push({
                     id: Date.now() + Math.random(),
-                    fecha: fechaPago,
+                    fecha: this.convertirFechaFormato(fechaPago),  // Convertir formato
                     concepto: `Pago cuota - ${vecino ? vecino.nombre : 'N/A'} (${cuota.concepto})`,
                     categoria: 'Cuota',
                     tipo: 'ingreso',
@@ -2042,11 +2037,12 @@
             // CONFIGURACIÓN
             loadConfig() {
                 const configNombre = document.getElementById('configNombre');
+                // Los inputs del código están ocultos pero siguen existiendo
                 const configCodigoActual = document.getElementById('configCodigoActual');
                 
                 if (configNombre) configNombre.value = this.data.nombre;
                 if (configCodigoActual) {
-                    configCodigoActual.value = this.data.codigoActivacion || 'No configurado';
+                    configCodigoActual.value = this.data.codigoActivacion || '';
                 }
             },
             
