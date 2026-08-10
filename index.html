@@ -425,12 +425,37 @@
                                     <button class="btn-small" onclick="app.registrarPago(${c.id})">💳 Pagar</button>
                                 ` : `
                                     <button class="btn-small" onclick="app.anularPago(${c.id})">❌ Anular</button>
+                                    <button class="btn-small" onclick="app.generarReciboDesdeCuota(${c.id})" style="background: #17a2b8;">📄 Recibo</button>
                                 `}
                                 <button class="btn-small btn-delete" onclick="app.deleteCuota(${c.id})">🗑️ Eliminar</button>
                             </td>
                         </tr>
                     `;
                 }).join('');
+            },
+            
+            generarReciboDesdeCuota(cuotaId) {
+                const c = this.data.cuotas.find(x => x.id === cuotaId);
+                if (!c) {
+                    alert('Cuota no encontrada');
+                    return;
+                }
+                
+                if (c.estado !== 'pagada') {
+                    alert('Solo se pueden generar recibos de cuotas pagadas');
+                    return;
+                }
+                
+                const v = this.data.vecinos.find(x => x.id === c.vecinoId);
+                const pago = this.data.pagos.find(p => p.id === c.idPago);
+                
+                if (!pago) {
+                    alert('No se encontró el registro de pago');
+                    return;
+                }
+                
+                this.generarRecibo(v, c, pago.fecha, c.importe);
+                alert('✓ Recibo descargado (duplicado)');
             },
             
             deleteCuota(id) {
