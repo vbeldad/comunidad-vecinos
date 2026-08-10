@@ -315,7 +315,13 @@
             
             renderVecinos() {
                 const list = document.getElementById('vecinosList');
-                list.innerHTML = this.data.vecinos.map(v => `
+                // Ordenar por fecha de alta (más antiguos primero)
+                const vecinosOrdenados = [...this.data.vecinos].sort((a, b) => {
+                    const fechaA = new Date(a.fecha || '1900-01-01');
+                    const fechaB = new Date(b.fecha || '1900-01-01');
+                    return fechaA - fechaB;
+                });
+                list.innerHTML = vecinosOrdenados.map(v => `
                     <tr>
                         <td>${v.nombre}</td>
                         <td>${v.piso}</td>
@@ -421,7 +427,11 @@
             
             renderCuotas() {
                 const list = document.getElementById('cuotasList');
-                list.innerHTML = this.data.cuotas.map(c => {
+                // Ordenar por mes (más recientes primero)
+                const cuotasOrdenadas = [...this.data.cuotas].sort((a, b) => {
+                    return b.mes.localeCompare(a.mes);
+                });
+                list.innerHTML = cuotasOrdenadas.map(c => {
                     const v = this.data.vecinos.find(x => x.id === c.vecinoId);
                     return `
                         <tr>
@@ -697,7 +707,13 @@
             
             renderGastos() {
                 const list = document.getElementById('gastosList');
-                list.innerHTML = this.data.gastos.map(g => `
+                // Ordenar por fecha (más recientes primero)
+                const gastosOrdenados = [...this.data.gastos].sort((a, b) => {
+                    const fechaA = this.convertirFechaParaOrdenar(a.fecha);
+                    const fechaB = this.convertirFechaParaOrdenar(b.fecha);
+                    return fechaB - fechaA;
+                });
+                list.innerHTML = gastosOrdenados.map(g => `
                     <tr>
                         <td>${g.fecha}</td>
                         <td>${g.concepto}</td>
@@ -709,6 +725,12 @@
                         </td>
                     </tr>
                 `).join('');
+            },
+            
+            convertirFechaParaOrdenar(fechaStr) {
+                // Convierte de dd/mm/yyyy a Date para ordenar
+                const [dia, mes, año] = fechaStr.split('/');
+                return new Date(año, mes - 1, dia).getTime();
             },
             
             editarGasto(id) {
