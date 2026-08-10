@@ -127,6 +127,10 @@
         <div id="gastos" class="section card">
             <h2>Gastos/Ingresos</h2>
             <div class="form-group">
+                <label>Saldo Inicial (€)</label>
+                <input type="text" id="saldoInicial" placeholder="0" onchange="app.saveData(); app.renderGastos();">
+            </div>
+            <div class="form-group">
                 <label>Fecha (dd/mm/yyyy)</label>
                 <input type="text" id="gastoFecha" placeholder="01/01/2026">
             </div>
@@ -147,7 +151,7 @@
             </div>
             <button onclick="app.addGasto()" style="width: 100%; margin-bottom: 20px;">Agregar</button>
             <table>
-                <thead><tr><th>Fecha</th><th>Concepto</th><th>Tipo</th><th>Importe</th><th>Acciones</th></tr></thead>
+                <thead><tr><th>Fecha</th><th>Concepto</th><th>Tipo</th><th>Importe</th><th>Saldo</th><th>Acciones</th></tr></thead>
                 <tbody id="gastosList"></tbody>
             </table>
         </div>
@@ -174,6 +178,7 @@
             data: {
                 password: null,
                 nombre: 'Comunidad de Vecinos',
+                saldoInicial: 0,
                 vecinos: [],
                 cuotas: [],
                 pagos: [],
@@ -235,6 +240,7 @@
                 document.getElementById('loginScreen').classList.add('hidden');
                 document.getElementById('appScreen').classList.remove('hidden');
                 document.getElementById('passwordInput').value = '';
+                document.getElementById('saldoInicial').value = (this.data.saldoInicial || 0).toFixed(2);
                 this.updateDashboard();
                 this.renderVecinos();
                 this.renderCuotas();
@@ -254,7 +260,10 @@
                 if (name === 'dashboard') this.updateDashboard();
                 if (name === 'vecinos') this.renderVecinos();
                 if (name === 'cuotas') this.renderCuotas();
-                if (name === 'gastos') this.renderGastos();
+                if (name === 'gastos') {
+                    document.getElementById('saldoInicial').value = (this.data.saldoInicial || 0).toFixed(2);
+                    this.renderGastos();
+                }
             },
             
             updateDashboard() {
@@ -706,25 +715,43 @@
             },
             
             renderGastos() {
+                // Cargar saldo inicial
+                const saldoInicial = parseFloat(document.getElementById('saldoInicial').value.replace(',', '.')) || this.data.saldoInicial || 0;
+                this.data.saldoInicial = saldoInicial;
+                
                 const list = document.getElementById('gastosList');
-                // Ordenar por fecha (más recientes primero)
+                // Ordenar por fecha (más antiguas primero para calcular saldo acumulado)
                 const gastosOrdenados = [...this.data.gastos].sort((a, b) => {
                     const fechaA = this.convertirFechaParaOrdenar(a.fecha);
                     const fechaB = this.convertirFechaParaOrdenar(b.fecha);
-                    return fechaB - fechaA;
+                    return fechaA - fechaB;
                 });
-                list.innerHTML = gastosOrdenados.map(g => `
-                    <tr>
-                        <td>${g.fecha}</td>
-                        <td>${g.concepto}</td>
-                        <td style="color: ${g.tipo === 'gasto' ? '#dc3545' : '#28a745'}; font-weight: bold;">${g.tipo}</td>
-                        <td style="color: ${g.tipo === 'gasto' ? '#dc3545' : '#28a745'}; font-weight: bold;">${g.importe.toFixed(2)}€</td>
-                        <td>
-                            <button class="btn-small" onclick="app.editarGasto(${g.id})">✏️ Editar</button>
-                            <button class="btn-small btn-delete" onclick="app.deleteGasto(${g.id})">🗑️ Eliminar</button>
-                        </td>
-                    </tr>
-                `).join('');
+                
+                // Calcular saldo acumulado
+                let saldoAcumulado = saldoInicial;
+                list.innerHTML = gastosOrdenados.map((g, index) => {
+                    if (g.tipo === 'ingreso') {
+                        saldoAcumulado += g.importe;
+                    } else {
+                        saldoAcumulado -= g.importe;
+                    }
+                    
+                    const colorSaldo = saldoAcumulado >= 0 ? '#28a745' : '#dc3545';
+                    
+                    return `
+                        <tr>
+                            <td>${g.fecha}</td>
+                            <td>${g.concepto}</td>
+                            <td style="color: ${g.tipo === 'gasto' ? '#dc3545' : '#28a745'}; font-weight: bold;">${g.tipo}</td>
+                            <td style="color: ${g.tipo === 'gasto' ? '#dc3545' : '#28a745'}; font-weight: bold;">${g.importe.toFixed(2)}€</td>
+                            <td style="color: ${colorSaldo}; font-weight: bold;">${saldoAcumulado.toFixed(2)}€</td>
+                            <td>
+                                <button class="btn-small" onclick="app.editarGasto(${g.id})">✏️ Editar</button>
+                                <button class="btn-small btn-delete" onclick="app.deleteGasto(${g.id})">🗑️ Eliminar</button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
             },
             
             convertirFechaParaOrdenar(fechaStr) {
