@@ -155,6 +155,90 @@
             #loginScreen .placa, #loginScreen .sacudir { animation: none; }
             #loginScreen .btn-llamada { transition: none; }
         }
+
+        /* ---------- INFORMES ---------- */
+        .informe {
+            border: 1px solid #D8DCE1; border-radius: 8px; padding: 26px;
+            background: #fff; color: var(--pizarra);
+        }
+        .informe-cabecera {
+            display: flex; justify-content: space-between; align-items: flex-start; gap: 16px;
+            padding-bottom: 16px; margin-bottom: 20px; border-bottom: 2px solid var(--azulejo);
+        }
+        .informe-titulo {
+            font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800;
+            font-size: 22px; letter-spacing: -0.02em; color: var(--azulejo);
+        }
+        .informe-sub { font-size: 13px; color: #5C646C; margin-top: 4px; }
+        .informe-fecha { font-size: 12px; color: #6A727A; white-space: nowrap; }
+        .informe-ficha {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 12px; padding: 15px; background: #F4F6F8; border-radius: 6px; margin-bottom: 20px;
+        }
+        .informe-ficha span {
+            display: block; font-size: 10px; font-weight: 700; letter-spacing: .14em;
+            text-transform: uppercase; color: #6A727A; margin-bottom: 3px;
+        }
+        .informe-ficha strong { font-size: 15px; }
+        .informe-totales {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 12px; margin-bottom: 22px;
+        }
+        .informe-totales .tot {
+            padding: 13px 14px; background: #F4F6F8; border-radius: 6px;
+            border-left: 3px solid #C6CBD1;
+        }
+        .informe-totales .tot span {
+            display: block; font-size: 10px; font-weight: 700; letter-spacing: .12em;
+            text-transform: uppercase; color: #6A727A; margin-bottom: 5px;
+        }
+        .informe-totales .tot strong { font-size: 19px; font-family: 'Bricolage Grotesque', sans-serif; }
+        .informe-totales .tot-destacado { border-left-color: var(--laton); background: #FBF6EA; }
+        .informe-totales .tot-alerta { border-left-color: #B3402F; }
+        .informe-apartado {
+            font-family: 'Bricolage Grotesque', sans-serif; font-size: 15px; color: var(--azulejo);
+            margin: 26px 0 10px; padding-bottom: 6px; border-bottom: 1px solid #E2E6EA;
+        }
+        .informe-tabla { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+        .informe-tabla th {
+            background: #F4F6F8; text-align: left; padding: 9px 10px;
+            font-size: 10.5px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #5C646C;
+            border-bottom: 1px solid #D8DCE1;
+        }
+        .informe-tabla td { padding: 9px 10px; border-bottom: 1px solid #EDF0F2; }
+        .informe-tabla tbody tr:last-child td { border-bottom: none; }
+        .informe-vacio { color: #6A727A; font-style: italic; padding: 14px 0; }
+        .informe-aviso {
+            margin-top: 18px; padding: 12px 14px; border-radius: 6px;
+            background: #FBEDEA; border-left: 3px solid #B3402F; color: #7A2A1D; font-size: 13.5px;
+        }
+        .informe-ok {
+            margin-top: 18px; padding: 12px 14px; border-radius: 6px;
+            background: #EAF6EE; border-left: 3px solid #1B7A3E; color: #14532B; font-size: 13.5px;
+        }
+        .informe-pie {
+            margin-top: 26px; padding-top: 14px; border-top: 1px solid #E2E6EA;
+            font-size: 11px; color: #8A9199; text-align: center;
+        }
+        .btn-imprimir { width: 100%; margin-top: 16px; background: var(--laton); color: #2A1D05; }
+        .btn-imprimir:hover { background: #A97822; }
+
+        /* ---------- IMPRESIÓN: en el papel solo sale el informe ---------- */
+        @media print {
+            @page { margin: 14mm; }
+            body { background: #fff !important; padding: 0 !important; }
+            #loginScreen, .nav, .btn-imprimir, #informes > h2,
+            #informes > p, #informes .form-group, #informes > button,
+            #appScreen > .card:first-child { display: none !important; }
+            #informes.section { display: block !important; }
+            .card { box-shadow: none !important; padding: 0 !important; margin: 0 !important; border: none !important; }
+            .informe { border: none !important; padding: 0 !important; }
+            .informe-tabla { font-size: 11.5px; }
+            .informe-tabla thead { display: table-header-group; }
+            .informe-tabla tr { break-inside: avoid; }
+            .informe-cabecera, .informe-totales, .informe-ficha { break-inside: avoid; }
+            .informe-apartado { break-after: avoid; }
+        }
     </style>
 </head>
 <body>
@@ -189,6 +273,7 @@
                 <button onclick="app.showSection('vecinos')">👥 Vecinos</button>
                 <button onclick="app.showSection('cuotas')">💳 Cuotas</button>
                 <button onclick="app.showSection('gastos')">💰 Gastos</button>
+                <button onclick="app.showSection('informes')">📄 Informes</button>
                 <button onclick="app.showSection('config')">⚙️ Config</button>
                 <button class="logout" onclick="app.logout()">🚪 Salir</button>
             </div>
@@ -280,6 +365,30 @@
                 <thead><tr><th>Fecha</th><th>Concepto</th><th>Tipo</th><th>Importe</th><th>Saldo</th><th>Acciones</th></tr></thead>
                 <tbody id="gastosList"></tbody>
             </table>
+        </div>
+
+        <!-- INFORMES -->
+        <div id="informes" class="section card">
+            <h2>Informes</h2>
+            <p style="color: #666; font-size: 13px; margin-bottom: 15px;">
+                Elige de quién y de qué fechas, y genera el informe. Podrás imprimirlo o guardarlo en PDF.
+            </p>
+            <div class="form-group">
+                <label>Vecino</label>
+                <select id="informeVecino">
+                    <option value="todos">Todos los vecinos</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Desde (dd/mm/yyyy)</label>
+                <input type="text" id="informeDesde" placeholder="Dejar en blanco = desde el principio">
+            </div>
+            <div class="form-group">
+                <label>Hasta (dd/mm/yyyy)</label>
+                <input type="text" id="informeHasta" placeholder="Dejar en blanco = hasta hoy">
+            </div>
+            <button onclick="app.generarInforme()" style="width: 100%;">Generar informe</button>
+            <div id="informeResultado" style="margin-top: 25px;"></div>
         </div>
 
         <!-- CONFIG -->
@@ -444,6 +553,7 @@
                 if (name === 'vecinos') this.renderVecinos();
                 if (name === 'cuotas') this.renderCuotas();
                 if (name === 'gastos') this.renderGastos();
+                if (name === 'informes') this.prepararInformes();
                 if (name === 'config') {
                     document.getElementById('configSaldoInicial').value = (this.data.saldoInicial || 0).toFixed(2);
                     this.mostrarInfoBackup();
@@ -1108,6 +1218,247 @@
                     this.saveData();
                     this.renderGastos();
                 }
+            },
+            
+            // ---------- INFORMES ----------
+            
+            prepararInformes() {
+                const sel = document.getElementById('informeVecino');
+                const elegido = sel.value;
+                sel.innerHTML = '<option value="todos">Todos los vecinos</option>' +
+                    [...this.data.vecinos]
+                        .sort((a, b) => a.nombre.localeCompare(b.nombre))
+                        .map(v => `<option value="${v.id}">${this.escapar(v.nombre)} — ${this.escapar(v.piso)}</option>`)
+                        .join('');
+                if (elegido) sel.value = elegido;
+            },
+            
+            escapar(txt) {
+                return String(txt == null ? '' : txt)
+                    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+            },
+            
+            mesAFecha(mes) {
+                // '2026-03' -> tiempo del día 1 de ese mes
+                const [a, m] = String(mes).split('-').map(Number);
+                if (!a || !m) return 0;
+                return new Date(a, m - 1, 1).getTime();
+            },
+            
+            mesLegible(mes) {
+                const nombres = ['enero','febrero','marzo','abril','mayo','junio',
+                                 'julio','agosto','septiembre','octubre','noviembre','diciembre'];
+                const [a, m] = String(mes).split('-').map(Number);
+                if (!a || !m || m < 1 || m > 12) return mes;
+                return nombres[m - 1] + ' ' + a;
+            },
+            
+            generarInforme() {
+                const vecinoId = document.getElementById('informeVecino').value;
+                const desdeTxt = document.getElementById('informeDesde').value.trim();
+                const hastaTxt = document.getElementById('informeHasta').value.trim();
+                
+                if (desdeTxt && !this.fechaValida(desdeTxt)) {
+                    alert('La fecha "Desde" no es correcta.\nUsa dd/mm/yyyy, por ejemplo 01/01/2026');
+                    return;
+                }
+                if (hastaTxt && !this.fechaValida(hastaTxt)) {
+                    alert('La fecha "Hasta" no es correcta.\nUsa dd/mm/yyyy, por ejemplo 31/12/2026');
+                    return;
+                }
+                
+                const desde = desdeTxt ? this.convertirFechaParaOrdenar(desdeTxt) : 0;
+                // "Hasta" incluye el día entero
+                const hasta = hastaTxt ? this.convertirFechaParaOrdenar(hastaTxt) + 86399999 : Infinity;
+                
+                if (desde > hasta) {
+                    alert('La fecha "Desde" es posterior a "Hasta". Revísalas.');
+                    return;
+                }
+                
+                const periodo = (desdeTxt || hastaTxt)
+                    ? `Del ${desdeTxt || 'principio'} al ${hastaTxt || 'día de hoy'}`
+                    : 'Todo el histórico';
+                
+                const html = (vecinoId === 'todos')
+                    ? this.informeGeneral(desde, hasta, periodo)
+                    : this.informeVecino(Number(vecinoId), desde, hasta, periodo);
+                
+                document.getElementById('informeResultado').innerHTML = html;
+                document.getElementById('informeResultado').scrollIntoView({behavior: 'smooth', block: 'start'});
+            },
+            
+            informeVecino(vecinoId, desde, hasta, periodo) {
+                const v = this.data.vecinos.find(x => x.id === vecinoId);
+                if (!v) return '<p>Vecino no encontrado.</p>';
+                
+                // Sus cuotas dentro del periodo (por el mes de la cuota)
+                const cuotas = this.data.cuotas
+                    .filter(c => c.vecinoId === vecinoId)
+                    .filter(c => { const t = this.mesAFecha(c.mes); return t >= desde && t <= hasta; })
+                    .sort((a, b) => this.mesAFecha(a.mes) - this.mesAFecha(b.mes));
+                
+                const pagadas = cuotas.filter(c => c.estado === 'pagada');
+                const pendientes = cuotas.filter(c => c.estado !== 'pagada');
+                const totalPagado = pagadas.reduce((a, c) => a + c.importe, 0);
+                const totalDebe = pendientes.reduce((a, c) => a + c.importe, 0);
+                
+                const filas = cuotas.map(c => {
+                    const pago = c.idPago ? this.data.pagos.find(p => p.id === c.idPago) : null;
+                    const pagada = c.estado === 'pagada';
+                    return `<tr>
+                        <td>${this.mesLegible(c.mes)}</td>
+                        <td>${this.escapar(c.concepto)}</td>
+                        <td style="text-align:right">${c.importe.toFixed(2)}€</td>
+                        <td>${pago ? pago.fecha : '—'}</td>
+                        <td style="color:${pagada ? '#1B7A3E' : '#B3402F'};font-weight:700">
+                            ${pagada ? 'Pagada' : 'Pendiente'}</td>
+                    </tr>`;
+                }).join('');
+                
+                return `
+                <div class="informe" id="informeImprimible">
+                    <div class="informe-cabecera">
+                        <div>
+                            <div class="informe-titulo">${this.escapar(this.data.nombre)}</div>
+                            <div class="informe-sub">Informe individual · ${periodo}</div>
+                        </div>
+                        <div class="informe-fecha">Emitido el ${new Date().toLocaleDateString('es-ES')}</div>
+                    </div>
+                    
+                    <div class="informe-ficha">
+                        <div><span>Vecino</span><strong>${this.escapar(v.nombre)}</strong></div>
+                        <div><span>Piso</span><strong>${this.escapar(v.piso)}</strong></div>
+                        ${v.tel ? `<div><span>Teléfono</span><strong>${this.escapar(v.tel)}</strong></div>` : ''}
+                        ${v.email ? `<div><span>Email</span><strong>${this.escapar(v.email)}</strong></div>` : ''}
+                    </div>
+                    
+                    <div class="informe-totales">
+                        <div class="tot"><span>Cuotas en el periodo</span><strong>${cuotas.length}</strong></div>
+                        <div class="tot"><span>Pagado</span><strong style="color:#1B7A3E">${totalPagado.toFixed(2)}€</strong></div>
+                        <div class="tot ${totalDebe > 0 ? 'tot-alerta' : ''}"><span>Pendiente</span><strong style="color:${totalDebe > 0 ? '#B3402F' : '#1B7A3E'}">${totalDebe.toFixed(2)}€</strong></div>
+                    </div>
+                    
+                    ${cuotas.length === 0
+                        ? '<p class="informe-vacio">No hay cuotas de este vecino en el periodo elegido.</p>'
+                        : `<table class="informe-tabla">
+                            <thead><tr><th>Periodo</th><th>Concepto</th><th style="text-align:right">Importe</th><th>Fecha de pago</th><th>Estado</th></tr></thead>
+                            <tbody>${filas}</tbody>
+                          </table>`}
+                    
+                    ${totalDebe > 0 ? `<p class="informe-aviso">Este vecino tiene ${pendientes.length} cuota(s) sin pagar por un total de ${totalDebe.toFixed(2)}€.</p>` : ''}
+                    
+                    <div class="informe-pie">${this.escapar(this.data.nombre)} · Documento generado automáticamente</div>
+                </div>
+                <button onclick="app.imprimirInforme()" class="btn-imprimir">🖨️ Imprimir o guardar en PDF</button>
+                `;
+            },
+            
+            informeGeneral(desde, hasta, periodo) {
+                // Movimientos del periodo
+                const movs = this.data.gastos
+                    .filter(g => { const t = this.convertirFechaParaOrdenar(g.fecha); return t >= desde && t <= hasta; })
+                    .sort((a, b) => this.convertirFechaParaOrdenar(a.fecha) - this.convertirFechaParaOrdenar(b.fecha));
+                
+                const ingresos = movs.filter(g => g.tipo === 'ingreso').reduce((a, g) => a + g.importe, 0);
+                const gastos = movs.filter(g => g.tipo === 'gasto').reduce((a, g) => a + g.importe, 0);
+                
+                // Saldo al empezar el periodo = inicial + todo lo anterior
+                const anteriores = this.data.gastos.filter(g => this.convertirFechaParaOrdenar(g.fecha) < desde);
+                const saldoApertura = (this.data.saldoInicial || 0) +
+                    anteriores.reduce((a, g) => a + (g.tipo === 'ingreso' ? g.importe : -g.importe), 0);
+                const saldoCierre = saldoApertura + ingresos - gastos;
+                
+                let acumulado = saldoApertura;
+                const filasMovs = movs.map(g => {
+                    acumulado += (g.tipo === 'ingreso' ? g.importe : -g.importe);
+                    const esIngreso = g.tipo === 'ingreso';
+                    return `<tr>
+                        <td>${g.fecha}</td>
+                        <td>${this.escapar(g.concepto)}</td>
+                        <td style="text-align:right;color:${esIngreso ? '#1B7A3E' : '#B3402F'};font-weight:700">
+                            ${esIngreso ? '+' : '−'}${g.importe.toFixed(2)}€</td>
+                        <td style="text-align:right">${acumulado.toFixed(2)}€</td>
+                    </tr>`;
+                }).join('');
+                
+                // Estado de cuotas por vecino en el periodo
+                const cuotasPeriodo = this.data.cuotas
+                    .filter(c => { const t = this.mesAFecha(c.mes); return t >= desde && t <= hasta; });
+                
+                const porVecino = [...this.data.vecinos]
+                    .sort((a, b) => a.nombre.localeCompare(b.nombre))
+                    .map(v => {
+                        const suyas = cuotasPeriodo.filter(c => c.vecinoId === v.id);
+                        const pag = suyas.filter(c => c.estado === 'pagada');
+                        const pen = suyas.filter(c => c.estado !== 'pagada');
+                        return {
+                            v,
+                            n: suyas.length,
+                            pagado: pag.reduce((a, c) => a + c.importe, 0),
+                            debe: pen.reduce((a, c) => a + c.importe, 0),
+                            nPen: pen.length
+                        };
+                    });
+                
+                const totalDebe = porVecino.reduce((a, x) => a + x.debe, 0);
+                const morosos = porVecino.filter(x => x.debe > 0);
+                
+                const filasVecinos = porVecino.map(x => `<tr>
+                        <td>${this.escapar(x.v.nombre)}</td>
+                        <td>${this.escapar(x.v.piso)}</td>
+                        <td style="text-align:right">${x.n}</td>
+                        <td style="text-align:right;color:#1B7A3E">${x.pagado.toFixed(2)}€</td>
+                        <td style="text-align:right;color:${x.debe > 0 ? '#B3402F' : '#6A727A'};font-weight:${x.debe > 0 ? '700' : '400'}">
+                            ${x.debe.toFixed(2)}€</td>
+                    </tr>`).join('');
+                
+                return `
+                <div class="informe" id="informeImprimible">
+                    <div class="informe-cabecera">
+                        <div>
+                            <div class="informe-titulo">${this.escapar(this.data.nombre)}</div>
+                            <div class="informe-sub">Informe general · ${periodo}</div>
+                        </div>
+                        <div class="informe-fecha">Emitido el ${new Date().toLocaleDateString('es-ES')}</div>
+                    </div>
+                    
+                    <div class="informe-totales">
+                        <div class="tot"><span>Saldo al empezar</span><strong>${saldoApertura.toFixed(2)}€</strong></div>
+                        <div class="tot"><span>Ingresos</span><strong style="color:#1B7A3E">+${ingresos.toFixed(2)}€</strong></div>
+                        <div class="tot"><span>Gastos</span><strong style="color:#B3402F">−${gastos.toFixed(2)}€</strong></div>
+                        <div class="tot tot-destacado"><span>Saldo al cerrar</span><strong style="color:${saldoCierre >= 0 ? '#1B7A3E' : '#B3402F'}">${saldoCierre.toFixed(2)}€</strong></div>
+                    </div>
+                    
+                    <h3 class="informe-apartado">Movimientos del periodo</h3>
+                    ${movs.length === 0
+                        ? '<p class="informe-vacio">No hay movimientos en el periodo elegido.</p>'
+                        : `<table class="informe-tabla">
+                            <thead><tr><th>Fecha</th><th>Concepto</th><th style="text-align:right">Importe</th><th style="text-align:right">Saldo</th></tr></thead>
+                            <tbody>${filasMovs}</tbody>
+                          </table>`}
+                    
+                    <h3 class="informe-apartado">Estado de cuotas por vecino</h3>
+                    ${this.data.vecinos.length === 0
+                        ? '<p class="informe-vacio">Todavía no hay vecinos dados de alta.</p>'
+                        : `<table class="informe-tabla">
+                            <thead><tr><th>Vecino</th><th>Piso</th><th style="text-align:right">Cuotas</th><th style="text-align:right">Pagado</th><th style="text-align:right">Pendiente</th></tr></thead>
+                            <tbody>${filasVecinos}</tbody>
+                          </table>`}
+                    
+                    ${totalDebe > 0
+                        ? `<p class="informe-aviso">Quedan ${totalDebe.toFixed(2)}€ por cobrar, repartidos entre ${morosos.length} vecino(s).</p>`
+                        : (cuotasPeriodo.length > 0 ? '<p class="informe-ok">Todas las cuotas del periodo están al corriente.</p>' : '')}
+                    
+                    <div class="informe-pie">${this.escapar(this.data.nombre)} · Documento generado automáticamente</div>
+                </div>
+                <button onclick="app.imprimirInforme()" class="btn-imprimir">🖨️ Imprimir o guardar en PDF</button>
+                `;
+            },
+            
+            imprimirInforme() {
+                window.print();
             },
             
             saveConfig() {
