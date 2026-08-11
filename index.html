@@ -4,47 +4,179 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestión Comunidad de Vecinos</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Karla:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --azulejo: #17457B;        /* azul cobalto de azulejo */
+            --azulejo-hondo: #0E2F57;
+            --laton: #C08A2E;          /* latón del botón de llamada */
+            --laton-claro: #E9BE63;
+            --cal: #EFEAE0;            /* pared encalada */
+            --pizarra: #1C2026;
+            --grabado: #2A2F36;
+        }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: Arial, sans-serif; background: #667eea; min-height: 100vh; padding: 20px; }
+        body { font-family: 'Karla', 'Segoe UI', Arial, sans-serif; background: var(--azulejo); min-height: 100vh; padding: 20px; }
         .container { max-width: 1000px; margin: 0 auto; }
         .card { background: white; border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-        h1 { color: #333; margin-bottom: 20px; }
-        h2 { color: #667eea; margin-bottom: 15px; font-size: 18px; }
+        h1 { font-family: 'Bricolage Grotesque', 'Segoe UI', sans-serif; color: #333; margin-bottom: 20px; letter-spacing: -0.02em; }
+        h2 { font-family: 'Bricolage Grotesque', 'Segoe UI', sans-serif; color: var(--azulejo); margin-bottom: 15px; font-size: 18px; }
         .nav { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
-        .nav button { padding: 10px 15px; background: #667eea; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        .nav button:hover { background: #5568d3; }
-        .nav .logout { background: #dc3545; }
+        .nav button { padding: 10px 15px; background: var(--azulejo); color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .nav button:hover { background: var(--azulejo-hondo); }
+        .nav .logout { background: #B3402F; }
         .section { display: none; }
         .section.active { display: block; }
         .form-group { margin-bottom: 15px; }
         label { display: block; margin-bottom: 5px; font-weight: bold; color: #333; }
-        input, textarea, select { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
-        button { padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        button:hover { background: #5568d3; }
+        input, textarea, select { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; font-family: inherit; }
+        button { padding: 10px 20px; background: var(--azulejo); color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-family: inherit; }
+        button:hover { background: var(--azulejo-hondo); }
         table { width: 100%; border-collapse: collapse; margin-top: 15px; }
         th, td { padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }
         th { background: #f5f5f5; font-weight: bold; }
         .btn-small { padding: 5px 10px; font-size: 12px; margin: 2px; }
-        .btn-delete { background: #dc3545; }
+        .btn-delete { background: #B3402F; }
         .hidden { display: none !important; }
-        .error { color: #dc3545; font-size: 12px; margin-top: 5px; display: none; }
+        .error { color: #B3402F; font-size: 12px; margin-top: 5px; display: none; }
         .stat { background: #f0f0f0; padding: 10px; margin: 10px 0; border-radius: 4px; }
-        #loginScreen { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #667eea; display: flex; align-items: center; justify-content: center; z-index: 1000; }
-        #loginScreen .card { width: 90%; max-width: 400px; }
+
+        /* ---------- PANTALLA DE ENTRADA: portero automático ---------- */
+        #loginScreen {
+            position: fixed; inset: 0; z-index: 1000;
+            display: flex; align-items: center; justify-content: center; padding: 24px;
+            background-color: var(--azulejo);
+            background-image:
+                repeating-linear-gradient(45deg, rgba(255,255,255,.055) 0 2px, transparent 2px 28px),
+                repeating-linear-gradient(-45deg, rgba(255,255,255,.055) 0 2px, transparent 2px 28px),
+                radial-gradient(circle at 50% 50%, rgba(255,255,255,.05) 0 3.5px, transparent 4.5px);
+            background-size: auto, auto, 56px 56px;
+        }
+        /* penumbra del portal */
+        #loginScreen::before {
+            content: ''; position: absolute; inset: 0; pointer-events: none;
+            background: radial-gradient(ellipse at 50% 38%, transparent 0%, rgba(6,20,40,.55) 78%);
+        }
+
+        #loginScreen .placa {
+            position: relative; width: 100%; max-width: 380px; padding: 30px 30px 34px;
+            border-radius: 12px;
+            background:
+                repeating-linear-gradient(90deg, rgba(0,0,0,.028) 0 1px, transparent 1px 3px),
+                linear-gradient(157deg, #EAEDF0 0%, #C6CBD1 19%, #DEE2E6 35%, #B7BDC4 56%, #D9DDE1 75%, #BEC4CA 100%);
+            box-shadow:
+                inset 0 1px 0 rgba(255,255,255,.9),
+                inset 0 -2px 3px rgba(0,0,0,.18),
+                0 22px 45px rgba(5,16,33,.5);
+            animation: asentar .5s cubic-bezier(.2,.7,.3,1) both;
+        }
+        @keyframes asentar { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+
+        /* tornillos de la placa */
+        #loginScreen .placa::before, #loginScreen .placa::after {
+            content: ''; position: absolute; top: 11px; width: 9px; height: 9px; border-radius: 50%;
+            background: radial-gradient(circle at 35% 30%, #F2F4F6, #9BA2AA 60%, #6E767E);
+            box-shadow: inset 0 -1px 1px rgba(0,0,0,.35);
+        }
+        #loginScreen .placa::before { left: 11px; }
+        #loginScreen .placa::after { right: 11px; }
+
+        /* rejilla del altavoz */
+        #loginScreen .rejilla {
+            height: 26px; border-radius: 4px; margin-bottom: 24px;
+            background: repeating-linear-gradient(90deg, #6D757D 0 2px, #ADB4BB 2px 6px);
+            box-shadow: inset 0 2px 4px rgba(0,0,0,.45);
+        }
+
+        #loginScreen .rotulo { text-align: center; margin-bottom: 22px; }
+        #loginScreen .rotulo .edificio {
+            font-family: 'Bricolage Grotesque', 'Segoe UI', sans-serif;
+            font-weight: 800; font-size: 25px; line-height: 1.06; letter-spacing: -0.025em;
+            color: var(--grabado); text-shadow: 0 1px 0 rgba(255,255,255,.75);
+        }
+        #loginScreen .rotulo .oficio {
+            margin-top: 7px; font-size: 10.5px; font-weight: 700;
+            letter-spacing: .3em; text-transform: uppercase; color: #6A727A;
+        }
+
+        #loginScreen .ranura { margin-bottom: 20px; }
+        #loginScreen .ranura label {
+            display: block; margin-bottom: 7px; font-size: 10.5px; font-weight: 700;
+            letter-spacing: .19em; text-transform: uppercase; color: #6A727A;
+        }
+        #loginScreen input[type="password"] {
+            width: 100%; padding: 13px 14px; font-size: 17px; letter-spacing: .16em;
+            font-family: 'Karla', monospace; color: #12161B;
+            background: #F6F7F8; border: 1px solid #9AA1A9; border-radius: 6px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,.16);
+            transition: border-color .15s, box-shadow .15s;
+        }
+        #loginScreen input[type="password"]:focus {
+            outline: none; border-color: var(--laton);
+            box-shadow: inset 0 2px 4px rgba(0,0,0,.16), 0 0 0 3px rgba(192,138,46,.35);
+        }
+
+        /* botón de llamada en latón */
+        #loginScreen .btn-llamada {
+            display: flex; align-items: center; justify-content: center; gap: 11px;
+            width: 100%; padding: 15px; border: none; border-radius: 8px; cursor: pointer;
+            font-family: 'Bricolage Grotesque', 'Segoe UI', sans-serif;
+            font-size: 16px; font-weight: 700; letter-spacing: .04em; color: #2A1D05;
+            background: linear-gradient(178deg, var(--laton-claro) 0%, var(--laton) 52%, #9C6E1F 100%);
+            box-shadow: 0 4px 0 #7A5616, 0 8px 16px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.55);
+            transition: transform .08s, box-shadow .08s, filter .15s;
+        }
+        #loginScreen .btn-llamada:hover { background: linear-gradient(178deg, var(--laton-claro) 0%, var(--laton) 52%, #9C6E1F 100%); filter: brightness(1.07); }
+        #loginScreen .btn-llamada:active { transform: translateY(4px); box-shadow: 0 0 0 #7A5616, 0 3px 8px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.4); }
+        #loginScreen .btn-llamada:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+        #loginScreen .btn-llamada .timbre {
+            width: 11px; height: 11px; border-radius: 50%;
+            background: #4C3708; box-shadow: inset 0 1px 1px rgba(0,0,0,.6), 0 0 0 3px rgba(255,255,255,.28);
+        }
+
+        #loginScreen .error { text-align: center; font-weight: 700; color: #8E2B1D; }
+        #loginScreen .primera-vez {
+            margin-top: 18px; padding-top: 15px; border-top: 1px solid rgba(0,0,0,.13);
+            font-size: 12.5px; line-height: 1.5; color: #5C646C; text-align: center;
+        }
+        #loginScreen .sacudir { animation: sacudir .32s; }
+        @keyframes sacudir {
+            0%,100% { transform: translateX(0); }
+            25% { transform: translateX(-7px); }
+            75% { transform: translateX(7px); }
+        }
+        @media (max-width: 420px) {
+            #loginScreen .placa { padding: 24px 20px 26px; }
+            #loginScreen .rotulo .edificio { font-size: 21px; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            #loginScreen .placa, #loginScreen .sacudir { animation: none; }
+            #loginScreen .btn-llamada { transition: none; }
+        }
     </style>
 </head>
 <body>
     <!-- LOGIN -->
     <div id="loginScreen">
-        <div class="card">
-            <h1>🏢 Gestión Comunidad de Vecinos</h1>
-            <div class="form-group">
-                <label>Contraseña</label>
-                <input type="password" id="passwordInput" placeholder="Ingresa tu contraseña">
+        <div class="placa" id="placaLogin">
+            <div class="rejilla"></div>
+            <div class="rotulo">
+                <div class="edificio" id="rotuloEdificio">Comunidad<br>de Vecinos</div>
+                <div class="oficio">Administración</div>
+            </div>
+            <div class="ranura">
+                <label for="passwordInput">Contraseña</label>
+                <input type="password" id="passwordInput" autocomplete="current-password">
                 <div class="error" id="loginError"></div>
             </div>
-            <button onclick="app.login()" style="width: 100%;">Acceder</button>
+            <button class="btn-llamada" onclick="app.login()">
+                <span class="timbre"></span>Entrar
+            </button>
+            <p class="primera-vez" id="avisoPrimeraVez">
+                Es la primera vez: la contraseña que escribas ahora será la tuya a partir de hoy.
+            </p>
         </div>
     </div>
 
@@ -210,9 +342,11 @@
             
             init() {
                 this.loadData();
+                this.prepararPantallaEntrada();
                 document.getElementById('passwordInput').addEventListener('keypress', (e) => {
                     if (e.key === 'Enter') this.login();
                 });
+                document.getElementById('passwordInput').focus();
             },
             
             loadData() {
@@ -232,16 +366,13 @@
             
             login() {
                 const entrada = document.getElementById('passwordInput').value.trim();
-                const errorDiv = document.getElementById('loginError');
-                errorDiv.classList.add('hidden');
                 
                 if (!entrada) {
-                    errorDiv.textContent = '❌ Ingresa una contraseña';
-                    errorDiv.classList.remove('hidden');
+                    this.errorLogin('Escribe la contraseña');
                     return;
                 }
                 
-                // Primera vez
+                // Primera vez: la contraseña que escriba queda registrada
                 if (!this.data.password) {
                     this.data.password = btoa(entrada);
                     this.saveData();
@@ -249,14 +380,41 @@
                     return;
                 }
                 
-                // Verificar
                 if (btoa(entrada) === this.data.password) {
                     this.loginExitoso();
                     return;
                 }
                 
-                errorDiv.textContent = '❌ Contraseña incorrecta';
-                errorDiv.classList.remove('hidden');
+                this.errorLogin('Contraseña incorrecta');
+            },
+            
+            errorLogin(mensaje) {
+                const errorDiv = document.getElementById('loginError');
+                errorDiv.textContent = mensaje;
+                errorDiv.style.display = 'block';
+                
+                const placa = document.getElementById('placaLogin');
+                placa.classList.remove('sacudir');
+                void placa.offsetWidth;   // reinicia la animación
+                placa.classList.add('sacudir');
+                
+                const campo = document.getElementById('passwordInput');
+                campo.value = '';
+                campo.focus();
+            },
+            
+            prepararPantallaEntrada() {
+                // El aviso de "primera vez" solo tiene sentido si aún no hay contraseña
+                const aviso = document.getElementById('avisoPrimeraVez');
+                if (aviso) aviso.style.display = this.data.password ? 'none' : 'block';
+                
+                // El rótulo muestra el nombre real de la comunidad
+                const rotulo = document.getElementById('rotuloEdificio');
+                if (rotulo && this.data.nombre && this.data.nombre !== 'Comunidad de Vecinos') {
+                    rotulo.textContent = this.data.nombre;
+                }
+                
+                document.getElementById('loginError').style.display = 'none';
             },
             
             loginExitoso() {
@@ -273,6 +431,9 @@
                 if (confirm('¿Salir?')) {
                     document.getElementById('appScreen').classList.add('hidden');
                     document.getElementById('loginScreen').classList.remove('hidden');
+                    document.getElementById('passwordInput').value = '';
+                    this.prepararPantallaEntrada();
+                    document.getElementById('passwordInput').focus();
                 }
             },
             
@@ -472,15 +633,6 @@
                 this.renderCuotas();
                 this.updateDashboard();
                 alert('✓ Cuotas creadas para todos los vecinos');
-            },
-            
-            cancelarEditarCuota() {
-                document.getElementById('cuotaEditandoId').value = '';
-                document.getElementById('cuotaMes').value = '';
-                document.getElementById('cuotaImporte').value = '';
-                document.getElementById('cuotaConcepto').value = '';
-                document.getElementById('btnCuota').textContent = 'Crear para todos';
-                document.getElementById('btnCancelCuota').style.display = 'none';
             },
             
             editarCuotaDesdeTabla(id) {
