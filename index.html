@@ -166,8 +166,24 @@
                 <input type="password" id="confirmPassword" placeholder="Confirma">
             </div>
             <button onclick="app.saveConfig()">Guardar Configuración</button>
-            <button onclick="app.exportData()" style="background: #17a2b8; margin-left: 10px;">Descargar Backup</button>
-            <button onclick="app.clearAll()" style="background: #dc3545; margin-left: 10px;">Borrar Todo</button>
+
+            <h2 style="margin-top: 30px;">Copia de seguridad</h2>
+            <p style="color: #666; font-size: 13px; margin-bottom: 15px;">
+                Los datos se guardan solo en este navegador. Si borras el historial o cambias de
+                ordenador, se pierden. Descarga una copia de vez en cuando y guárdala en un sitio seguro.
+            </p>
+            <div class="form-group">
+                <button onclick="app.exportData()" style="background: #17a2b8; width: 100%;">⬇️ Descargar copia de seguridad</button>
+            </div>
+            <div class="form-group">
+                <label>⬆️ Restaurar desde una copia</label>
+                <input type="file" id="importFile" accept=".json" onchange="app.importData(event)">
+                <p style="color: #999; font-size: 12px; margin-top: 5px;">Sustituirá todos los datos actuales por los del archivo.</p>
+            </div>
+            <div id="infoBackup" class="stat" style="font-size: 13px;"></div>
+
+            <h2 style="margin-top: 30px;">Zona peligrosa</h2>
+            <button onclick="app.clearAll()" style="background: #dc3545; width: 100%;">🗑️ Borrar todos los datos</button>
         </div>
     </div>
 
@@ -269,6 +285,7 @@
                 if (name === 'gastos') this.renderGastos();
                 if (name === 'config') {
                     document.getElementById('configSaldoInicial').value = (this.data.saldoInicial || 0).toFixed(2);
+                    this.mostrarInfoBackup();
                 }
             },
             
@@ -975,21 +992,143 @@
             },
             
             exportData() {
-                const json = JSON.stringify(this.data, null, 2);
+                // Guardamos también la fecha de la copia
+                const copia = Object.assign({}, this.data, {
+                    _fechaCopia: new Date().toISOString(),
+                    _version: 1
+                });
+                const json = JSON.stringify(copia, null, 2);
                 const blob = new Blob([json], {type: 'application/json'});
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = 'backup-' + new Date().toISOString().split('T')[0] + '.json';
+                const hoy = new Date();
+                const sello = hoy.getFullYear() + '-' +
+                    String(hoy.getMonth() + 1).padStart(2, '0') + '-' +
+                    String(hoy.getDate()).padStart(2, '0') + '_' +
+                    String(hoy.getHours()).padStart(2, '0') +
+                    String(hoy.getMinutes()).padStart(2, '0');
+                a.download = 'comunidad-copia-' + sello + '.json';
                 a.click();
+                URL.revokeObjectURL(url);
+                
+                this.data.ultimaCopia = new Date().toISOString();
+                this.saveData();
+                this.mostrarInfoBackup();
+            },
+            
+            importData(event) {
+                const archivo = event.target.files[0];
+                if (!archivo) return;
+                
+                const lector = new FileReader();
+                lector.onload = (e) => {
+                    let datos;
+                    try {
+                        datos = JSON.parse(e.target.result);
+                    } catch (err) {
+                        alert('❌ El archivo no es una copia válida.\nDebe ser el .json que descargaste desde aquí.');
+                        event.target.value = '';
+                        return;
+                    }
+                    
+                    // Comprobar que tiene la pinta de una copia nuestra
+                    if (!datos || !Array.isArray(datos.vecinos) || !Array.isArray(datos.cuotas) || !Array.isArray(datos.gastos)) {
+                        alert('❌ El archivo no parece una copia de esta aplicación.');
+                        event.target.value = '';
+                        return;
+                    }
+                    
+                    const resumen = `¿Restaurar esta copia?\n\n` +
+                        `Vecinos: ${datos.vecinos.length}\n` +
+                        `Cuotas: ${datos.cuotas.length}\n` +
+                        `Movimientos: ${datos.gastos.length}\n` +
+                        (datos._fechaCopia ? `Fecha de la copia: ${new Date(datos._fechaCopia).toLocaleString('es-ES')}\n` : '') +
+                        `\n⚠️ Se sustituirán TODOS los datos actuales.`;
+                    
+                    if (!confirm(resumen)) {
+                        event.target.value = '';
+                        return;
+                    }
+                    
+                    // Restaurar, rellenando lo que falte
+                    this.data = {
+                        password: datos.password || this.data.password,
+                        nombre: datos.nombre || 'Comunidad de Vecinos',
+                        saldoInicial: datos.saldoInicial || 0,
+                        vecinos: datos.vecinos || [],
+                        cuotas: datos.cuotas || [],
+                        pagos: datos.pagos || [],
+                        gastos: datos.gastos || [],
+                        ultimaCopia: datos.ultimaCopia || null
+                    };
+                    
+                    // Evitar que los IDs nuevos choquen con los restaurados
+                    const todos = [
+                        ...this.data.vecinos, ...this.data.cuotas,
+                        ...this.data.pagos, ...this.data.gastos
+                    ].map(x => Math.floor(Number(x.id) || 0));
+                    this._ultimoId = Math.max(0, ...todos);
+                    
+                    this.saveData();
+                    this.renderVecinos();
+                    this.renderCuotas();
+                    this.renderGastos();
+                    this.updateDashboard();
+                    document.getElementById('configSaldoInicial').value = (this.data.saldoInicial || 0).toFixed(2);
+                    this.mostrarInfoBackup();
+                    event.target.value = '';
+                    alert('✓ Copia restaurada correctamente');
+                };
+                lector.onerror = () => {
+                    alert('❌ No se pudo leer el archivo');
+                    event.target.value = '';
+                };
+                lector.readAsText(archivo);
+            },
+            
+            mostrarInfoBackup() {
+                const div = document.getElementById('infoBackup');
+                if (!div) return;
+                if (this.data.ultimaCopia) {
+                    const fecha = new Date(this.data.ultimaCopia);
+                    const dias = Math.floor((Date.now() - fecha.getTime()) / 86400000);
+                    let aviso = '';
+                    if (dias >= 30) aviso = ' ⚠️ Conviene descargar una nueva.';
+                    div.textContent = `Última copia descargada: ${fecha.toLocaleString('es-ES')}.${aviso}`;
+                    div.style.background = dias >= 30 ? '#fff3cd' : '#f0f0f0';
+                } else {
+                    div.textContent = '⚠️ Todavía no has descargado ninguna copia de seguridad.';
+                    div.style.background = '#fff3cd';
+                }
             },
             
             clearAll() {
-                if (confirm('¿BORRAR TODO? No se puede deshacer')) {
-                    this.data = { password: null, nombre: 'Comunidad', vecinos: [], cuotas: [], pagos: [], gastos: [] };
-                    this.saveData();
-                    alert('Borrado');
+                if (!confirm('⚠️ Se van a BORRAR TODOS los datos.\nEsto no se puede deshacer.\n\n¿Continuar?')) return;
+                
+                const hayDatos = this.data.vecinos.length || this.data.cuotas.length || this.data.gastos.length;
+                if (hayDatos && confirm('¿Quieres descargar una copia de seguridad antes de borrar?')) {
+                    this.exportData();
                 }
+                
+                if (!confirm('Última confirmación: ¿borrar todos los datos?')) return;
+                
+                this.data = {
+                    password: this.data.password,
+                    nombre: 'Comunidad de Vecinos',
+                    saldoInicial: 0,
+                    vecinos: [], cuotas: [], pagos: [], gastos: [],
+                    ultimaCopia: null
+                };
+                this._ultimoId = 0;
+                this.saveData();
+                this.renderVecinos();
+                this.renderCuotas();
+                this.renderGastos();
+                this.updateDashboard();
+                document.getElementById('configSaldoInicial').value = '0.00';
+                this.mostrarInfoBackup();
+                alert('✓ Datos borrados. La contraseña se mantiene.');
             }
         };
         
