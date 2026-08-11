@@ -183,6 +183,15 @@
                 gastos: []
             },
             
+            _ultimoId: 0,
+            
+            nuevoId() {
+                // IDs enteros siempre únicos y crecientes
+                const ahora = Date.now();
+                this._ultimoId = ahora > this._ultimoId ? ahora : this._ultimoId + 1;
+                return this._ultimoId;
+            },
+            
             init() {
                 this.loadData();
                 document.getElementById('passwordInput').addEventListener('keypress', (e) => {
@@ -268,16 +277,13 @@
                 const pagadas = this.data.cuotas.filter(c => c.estado === 'pagada').length;
                 const pendientes = this.data.cuotas.filter(c => c.estado === 'pendiente').length;
                 
-                // Ingresos = pagos de cuotas + ingresos manuales en gastos
-                const ingresosAutomaticos = this.data.pagos.reduce((a, p) => a + p.importe, 0);
-                const ingresosMantuales = this.data.gastos.filter(g => g.tipo === 'ingreso').reduce((a, g) => a + g.importe, 0);
-                const totalIngresos = ingresosAutomaticos + ingresosMantuales;
-                
-                // Gastos = solo gastos manuales
+                // Todo el dinero pasa por Gastos/Ingresos (los pagos de cuotas
+                // ya crean su ingreso ahí), así que se cuenta UNA sola vez.
+                const totalIngresos = this.data.gastos.filter(g => g.tipo === 'ingreso').reduce((a, g) => a + g.importe, 0);
                 const totalGastado = this.data.gastos.filter(g => g.tipo === 'gasto').reduce((a, g) => a + g.importe, 0);
                 
-                // Saldo final
-                const saldo = totalIngresos - totalGastado;
+                // Mismo saldo que muestra la tabla de Gastos
+                const saldo = (this.data.saldoInicial || 0) + totalIngresos - totalGastado;
                 
                 document.getElementById('totalCuotasPagadas').textContent = pagadas;
                 document.getElementById('totalCuotasPendientes').textContent = pendientes;
@@ -306,7 +312,7 @@
                 }
                 
                 this.data.vecinos.push({
-                    id: Date.now(),
+                    id: this.nuevoId(),
                     nombre, piso, tel, email,
                     fecha: new Date().toLocaleDateString('es-ES')
                 });
@@ -343,20 +349,67 @@
             
             editarVecino(id) {
                 const v = this.data.vecinos.find(x => x.id === id);
+                if (!v) { alert('Vecino no encontrado'); return; }
+                
                 const nombre = prompt('Nombre:', v.nombre);
-                if (nombre !== null && nombre.trim()) {
-                    v.nombre = nombre.trim();
-                    this.saveData();
-                    this.renderVecinos();
+                if (nombre === null) return;
+                
+                const piso = prompt('Piso:', v.piso);
+                if (piso === null) return;
+                
+                const tel = prompt('Teléfono:', v.tel || '');
+                if (tel === null) return;
+                
+                const email = prompt('Email:', v.email || '');
+                if (email === null) return;
+                
+                if (!nombre.trim() || !piso.trim()) {
+                    alert('El nombre y el piso son obligatorios');
+                    return;
                 }
+                
+                v.nombre = nombre.trim();
+                v.piso = piso.trim();
+                v.tel = tel.trim();
+                v.email = email.trim();
+                
+                this.saveData();
+                this.renderVecinos();
+                this.renderCuotas();
+                alert('✓ Vecino editado');
             },
             
             deleteVecino(id) {
-                if (confirm('¿Eliminar?')) {
-                    this.data.vecinos = this.data.vecinos.filter(v => v.id !== id);
-                    this.saveData();
-                    this.renderVecinos();
+                const v = this.data.vecinos.find(x => x.id === id);
+                if (!v) return;
+                
+                const susCuotas = this.data.cuotas.filter(c => c.vecinoId === id);
+                const pagadas = susCuotas.filter(c => c.estado === 'pagada').length;
+                
+                let aviso = `¿Eliminar a ${v.nombre}?`;
+                if (susCuotas.length > 0) {
+                    aviso += `\n\nSe eliminarán también sus ${susCuotas.length} cuota(s)`;
+                    if (pagadas > 0) aviso += `, ${pagadas} pago(s) y sus ingresos en Gastos`;
+                    aviso += '.';
                 }
+                if (!confirm(aviso)) return;
+                
+                // Borrar pagos e ingresos de sus cuotas pagadas
+                susCuotas.forEach(c => {
+                    if (c.idPago) this.data.pagos = this.data.pagos.filter(p => p.id !== c.idPago);
+                    if (c.idIngreso) this.data.gastos = this.data.gastos.filter(g => g.id !== c.idIngreso);
+                });
+                
+                // Borrar sus cuotas y al vecino
+                this.data.cuotas = this.data.cuotas.filter(c => c.vecinoId !== id);
+                this.data.vecinos = this.data.vecinos.filter(x => x.id !== id);
+                
+                this.saveData();
+                this.renderVecinos();
+                this.renderCuotas();
+                this.renderGastos();
+                this.updateDashboard();
+                alert('✓ Vecino eliminado');
             },
             
             crearOEditarCuota() {
@@ -388,7 +441,7 @@
                 
                 this.data.vecinos.forEach(v => {
                     this.data.cuotas.push({
-                        id: Date.now() + Math.random(),
+                        id: this.nuevoId(),
                         vecinoId: v.id,
                         mes, importe, concepto,
                         estado: 'pendiente'
@@ -519,8 +572,9 @@
                 const c = this.data.cuotas.find(x => x.id === id);
                 
                 if (c.estado === 'pagada') {
-                    const confirmar = confirm('Esta cuota está pagada. ¿Eliminar de todas formas? Se mantendrá el ingreso registrado.');
-                    if (!confirmar) return;
+                    if (!confirm('Esta cuota está pagada.\n¿Eliminarla junto con su pago y su ingreso en Gastos?')) return;
+                    this.data.pagos = this.data.pagos.filter(p => p.id !== c.idPago);
+                    this.data.gastos = this.data.gastos.filter(g => g.id !== c.idIngreso);
                 } else {
                     if (!confirm('¿Eliminar esta cuota?')) return;
                 }
@@ -528,46 +582,73 @@
                 this.data.cuotas = this.data.cuotas.filter(x => x.id !== id);
                 this.saveData();
                 this.renderCuotas();
+                this.renderGastos();
+                this.updateDashboard();
                 alert('✓ Cuota eliminada');
             },
             
             registrarPago(cuotaId) {
                 const c = this.data.cuotas.find(x => x.id === cuotaId);
+                if (!c) { alert('Cuota no encontrada'); return; }
+                
                 const fecha = prompt('Fecha de pago (dd/mm/yyyy):', new Date().toLocaleDateString('es-ES'));
-                if (fecha) {
-                    const idPago = Date.now();
-                    this.data.pagos.push({
-                        id: idPago,
-                        cuotaId: cuotaId,
-                        importe: c.importe,
-                        fecha: fecha
-                    });
-                    c.estado = 'pagada';
-                    c.idPago = idPago;
-                    
-                    // ✨ AGREGAR COMO INGRESO EN GASTOS
-                    const vecino = this.data.vecinos.find(v => v.id === c.vecinoId);
-                    this.data.gastos.push({
-                        id: Date.now() + Math.random(),
-                        fecha: fecha,
-                        concepto: `Pago cuota - ${vecino ? vecino.nombre : 'N/A'} (${c.concepto})`,
-                        tipo: 'ingreso',
-                        importe: c.importe
-                    });
-                    
-                    // ✨ GENERAR CUOTA DEL SIGUIENTE MES
-                    this.generarCuotaSiguienteMes(c);
-                    
-                    this.saveData();
-                    this.renderCuotas();
-                    this.renderGastos();
-                    this.updateDashboard();
-                    
-                    // Generar recibo
-                    this.generarRecibo(vecino, c, fecha, c.importe);
-                    
-                    alert('✓ Pago registrado\n✓ Ingreso agregado\n✓ Cuota del siguiente mes creada\n✓ Recibo descargado');
+                if (fecha === null) return;
+                
+                if (!this.fechaValida(fecha)) {
+                    alert('Fecha incorrecta.\nDebes usar dd/mm/yyyy\nEjemplo: 15/01/2026');
+                    return;
                 }
+                
+                const fechaLimpia = fecha.trim();
+                const vecino = this.data.vecinos.find(v => v.id === c.vecinoId);
+                
+                // 1. Registrar el pago
+                const idPago = this.nuevoId();
+                this.data.pagos.push({
+                    id: idPago,
+                    cuotaId: cuotaId,
+                    importe: c.importe,
+                    fecha: fechaLimpia
+                });
+                
+                // 2. Crear el ingreso en Gastos, enlazado a la cuota
+                const idIngreso = this.nuevoId();
+                this.data.gastos.push({
+                    id: idIngreso,
+                    fecha: fechaLimpia,
+                    concepto: `Pago cuota - ${vecino ? vecino.nombre : 'N/A'} (${c.concepto})`,
+                    tipo: 'ingreso',
+                    importe: c.importe
+                });
+                
+                // 3. Marcar la cuota y guardar los enlaces
+                c.estado = 'pagada';
+                c.idPago = idPago;
+                c.idIngreso = idIngreso;
+                
+                // 4. Generar la cuota del mes siguiente
+                this.generarCuotaSiguienteMes(c);
+                
+                this.saveData();
+                this.renderCuotas();
+                this.renderGastos();
+                this.updateDashboard();
+                
+                this.generarRecibo(vecino, c, fechaLimpia, c.importe);
+                
+                alert('✓ Pago registrado\n✓ Ingreso agregado\n✓ Cuota del siguiente mes creada\n✓ Recibo descargado');
+            },
+            
+            fechaValida(fecha) {
+                if (!fecha) return false;
+                const partes = fecha.trim().split('/');
+                if (partes.length !== 3) return false;
+                const [d, m, a] = partes.map(Number);
+                if (!d || !m || !a) return false;
+                if (m < 1 || m > 12) return false;
+                if (d < 1 || d > 31) return false;
+                if (String(partes[2]).length !== 4) return false;
+                return true;
             },
             
             generarRecibo(vecino, cuota, fechaPago, importe) {
@@ -698,7 +779,7 @@
                 
                 if (!existe) {
                     this.data.cuotas.push({
-                        id: Date.now() + Math.random(),
+                        id: this.nuevoId(),
                         vecinoId: cuotaActual.vecinoId,
                         mes: siguienteMes,
                         importe: cuotaActual.importe,
@@ -709,14 +790,25 @@
             },
             
             anularPago(cuotaId) {
-                if (confirm('¿Anular pago?')) {
-                    const c = this.data.cuotas.find(x => x.id === cuotaId);
-                    this.data.pagos = this.data.pagos.filter(p => p.id !== c.idPago);
-                    c.estado = 'pendiente';
-                    delete c.idPago;
-                    this.saveData();
-                    this.renderCuotas();
-                }
+                const c = this.data.cuotas.find(x => x.id === cuotaId);
+                if (!c) { alert('Cuota no encontrada'); return; }
+                
+                if (!confirm('¿Anular el pago?\nSe eliminará también el ingreso de Gastos.')) return;
+                
+                // Borrar el pago
+                this.data.pagos = this.data.pagos.filter(p => p.id !== c.idPago);
+                // Borrar el ingreso asociado
+                this.data.gastos = this.data.gastos.filter(g => g.id !== c.idIngreso);
+                
+                c.estado = 'pendiente';
+                delete c.idPago;
+                delete c.idIngreso;
+                
+                this.saveData();
+                this.renderCuotas();
+                this.renderGastos();
+                this.updateDashboard();
+                alert('✓ Pago anulado y el ingreso eliminado');
             },
             
             addGasto() {
@@ -730,8 +822,18 @@
                     return;
                 }
                 
+                if (!this.fechaValida(fecha)) {
+                    alert('Fecha incorrecta.\nDebes usar dd/mm/yyyy\nEjemplo: 15/01/2026');
+                    return;
+                }
+                
+                if (isNaN(importe) || importe <= 0) {
+                    alert('Importe inválido');
+                    return;
+                }
+                
                 this.data.gastos.push({
-                    id: Date.now(),
+                    id: this.nuevoId(),
                     fecha, concepto, tipo, importe
                 });
                 
@@ -781,9 +883,13 @@
             },
             
             convertirFechaParaOrdenar(fechaStr) {
-                // Convierte de dd/mm/yyyy a Date para ordenar
-                const [dia, mes, año] = fechaStr.split('/');
-                return new Date(año, mes - 1, dia).getTime();
+                // Convierte de dd/mm/yyyy a número para ordenar
+                if (!fechaStr) return 0;
+                const partes = String(fechaStr).trim().split('/');
+                if (partes.length !== 3) return 0;
+                const [dia, mes, año] = partes.map(Number);
+                if (!dia || !mes || !año) return 0;
+                return new Date(año, mes - 1, dia).getTime() || 0;
             },
             
             editarGasto(id) {
@@ -805,6 +911,11 @@
                 
                 const importe = prompt('Importe (€):', g.importe);
                 if (importe === null) return;
+                
+                if (!this.fechaValida(fecha)) {
+                    alert('Fecha incorrecta.\nDebes usar dd/mm/yyyy\nEjemplo: 15/01/2026');
+                    return;
+                }
                 
                 const importeNum = parseFloat(importe.replace(',', '.'));
                 if (isNaN(importeNum) || importeNum <= 0) {
