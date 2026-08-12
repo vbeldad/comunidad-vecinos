@@ -223,6 +223,29 @@
         .btn-imprimir { width: 100%; margin-top: 16px; background: var(--laton); color: #2A1D05; }
         .btn-imprimir:hover { background: #A97822; }
 
+        /* ---------- FILTROS DE GASTOS ---------- */
+        .filtros {
+            background: #F4F6F8; border: 1px solid #E2E6EA; border-radius: 8px;
+            padding: 14px; margin-bottom: 6px;
+        }
+        .filtros-fila { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
+        .filtro { flex: 1 1 200px; }
+        .filtro-corto { flex: 0 1 140px; }
+        .filtros label {
+            display: block; margin-bottom: 5px; font-size: 10px; font-weight: 700;
+            letter-spacing: .13em; text-transform: uppercase; color: #6A727A;
+        }
+        .filtros input, .filtros select { padding: 8px 10px; font-size: 13.5px; background: #fff; }
+        .btn-limpiar {
+            flex: 0 0 auto; padding: 9px 14px; font-size: 13px;
+            background: #fff; color: #5C646C; border: 1px solid #C6CBD1;
+        }
+        .btn-limpiar:hover { background: #E9EDF0; color: var(--pizarra); }
+        .resumen-filtro { margin-top: 12px; font-size: 13px; color: #5C646C; }
+        th.orden { cursor: pointer; user-select: none; white-space: nowrap; }
+        th.orden:hover { background: #E4E9ED; }
+        th.orden span { color: var(--azulejo); font-size: 11px; }
+
         /* ---------- IMPRESIÓN: en el papel solo sale el informe ---------- */
         @media print {
             @page { margin: 14mm; }
@@ -361,8 +384,43 @@
                 <input type="text" id="gastoImporte" placeholder="100">
             </div>
             <button onclick="app.addGasto()" style="width: 100%; margin-bottom: 20px;">Agregar</button>
+
+            <div class="filtros">
+                <div class="filtros-fila">
+                    <div class="filtro">
+                        <label for="fBuscar">Buscar en el concepto</label>
+                        <input type="text" id="fBuscar" placeholder="Ej: ascensor, Ana…" oninput="app.renderGastos()">
+                    </div>
+                    <div class="filtro filtro-corto">
+                        <label for="fTipo">Tipo</label>
+                        <select id="fTipo" onchange="app.renderGastos()">
+                            <option value="todos">Todos</option>
+                            <option value="ingreso">Solo ingresos</option>
+                            <option value="gasto">Solo gastos</option>
+                        </select>
+                    </div>
+                    <div class="filtro filtro-corto">
+                        <label for="fDesde">Desde</label>
+                        <input type="text" id="fDesde" placeholder="dd/mm/aaaa" oninput="app.renderGastos()">
+                    </div>
+                    <div class="filtro filtro-corto">
+                        <label for="fHasta">Hasta</label>
+                        <input type="text" id="fHasta" placeholder="dd/mm/aaaa" oninput="app.renderGastos()">
+                    </div>
+                    <button class="btn-limpiar" onclick="app.limpiarFiltros()">Quitar filtros</button>
+                </div>
+                <div id="resumenFiltro" class="resumen-filtro"></div>
+            </div>
+
             <table>
-                <thead><tr><th>Fecha</th><th>Concepto</th><th>Tipo</th><th>Importe</th><th>Saldo</th><th>Acciones</th></tr></thead>
+                <thead><tr>
+                    <th class="orden" onclick="app.ordenarGastos('fecha')">Fecha <span id="ordFecha"></span></th>
+                    <th class="orden" onclick="app.ordenarGastos('concepto')">Concepto <span id="ordConcepto"></span></th>
+                    <th class="orden" onclick="app.ordenarGastos('tipo')">Tipo <span id="ordTipo"></span></th>
+                    <th class="orden" onclick="app.ordenarGastos('importe')">Importe <span id="ordImporte"></span></th>
+                    <th>Saldo</th>
+                    <th>Acciones</th>
+                </tr></thead>
                 <tbody id="gastosList"></tbody>
             </table>
         </div>
@@ -1320,35 +1378,119 @@
                 this.renderGastos();
             },
             
+            ordenGastos: { campo: 'fecha', asc: true },
+            
+            ordenarGastos(campo) {
+                if (this.ordenGastos.campo === campo) {
+                    this.ordenGastos.asc = !this.ordenGastos.asc;
+                } else {
+                    // Columna nueva: siempre empieza de menor a mayor
+                    this.ordenGastos = { campo, asc: true };
+                }
+                this.renderGastos();
+            },
+            
+            limpiarFiltros() {
+                ['fBuscar', 'fDesde', 'fHasta'].forEach(id => document.getElementById(id).value = '');
+                document.getElementById('fTipo').value = 'todos';
+                this.renderGastos();
+            },
+            
             renderGastos() {
                 const saldoInicial = this.data.saldoInicial || 0;
-                
                 const list = document.getElementById('gastosList');
-                // Ordenar por fecha (más antiguas primero para calcular saldo acumulado)
-                const gastosOrdenados = [...this.data.gastos].sort((a, b) => {
-                    const fechaA = this.convertirFechaParaOrdenar(a.fecha);
-                    const fechaB = this.convertirFechaParaOrdenar(b.fecha);
-                    return fechaA - fechaB;
+                
+                // 1. El saldo se calcula SIEMPRE sobre todos los movimientos en orden
+                //    de fecha, para que al filtrar siga siendo el saldo real de ese día
+                const cronologico = [...this.data.gastos].sort((a, b) =>
+                    this.convertirFechaParaOrdenar(a.fecha) - this.convertirFechaParaOrdenar(b.fecha));
+                
+                const saldoDe = {};
+                let acumulado = saldoInicial;
+                cronologico.forEach(g => {
+                    acumulado += (g.tipo === 'ingreso' ? g.importe : -g.importe);
+                    saldoDe[g.id] = acumulado;
                 });
                 
-                // Calcular saldo acumulado
-                let saldoAcumulado = saldoInicial;
-                list.innerHTML = gastosOrdenados.map((g, index) => {
-                    if (g.tipo === 'ingreso') {
-                        saldoAcumulado += g.importe;
+                // 2. Aplicar los filtros
+                const buscar = (document.getElementById('fBuscar').value || '').trim().toLowerCase();
+                const tipo   = document.getElementById('fTipo').value;
+                const desdeT = (document.getElementById('fDesde').value || '').trim();
+                const hastaT = (document.getElementById('fHasta').value || '').trim();
+                
+                const desde = this.fechaValida(desdeT) ? this.convertirFechaParaOrdenar(desdeT) : 0;
+                const hasta = this.fechaValida(hastaT) ? this.convertirFechaParaOrdenar(hastaT) + 86399999 : Infinity;
+                
+                let filtrados = cronologico.filter(g => {
+                    if (tipo !== 'todos' && g.tipo !== tipo) return false;
+                    if (buscar && !String(g.concepto).toLowerCase().includes(buscar)) return false;
+                    const t = this.convertirFechaParaOrdenar(g.fecha);
+                    return t >= desde && t <= hasta;
+                });
+                
+                // 3. Ordenar según la columna elegida
+                const { campo, asc } = this.ordenGastos;
+                filtrados.sort((a, b) => {
+                    let r;
+                    if (campo === 'fecha')        r = this.convertirFechaParaOrdenar(a.fecha) - this.convertirFechaParaOrdenar(b.fecha);
+                    else if (campo === 'importe') r = a.importe - b.importe;
+                    else                          r = String(a[campo]).localeCompare(String(b[campo]), 'es');
+                    return asc ? r : -r;
+                });
+                
+                // Flechas en las cabeceras
+                ['Fecha', 'Concepto', 'Tipo', 'Importe'].forEach(c => {
+                    const el = document.getElementById('ord' + c);
+                    if (el) el.textContent = (campo === c.toLowerCase()) ? (asc ? '▲' : '▼') : '';
+                });
+                
+                // 4. Resumen de lo que se está viendo
+                const ing = filtrados.filter(g => g.tipo === 'ingreso').reduce((a, g) => a + g.importe, 0);
+                const gas = filtrados.filter(g => g.tipo === 'gasto').reduce((a, g) => a + g.importe, 0);
+                const hayFiltro = buscar || tipo !== 'todos' || desde > 0 || hasta < Infinity;
+                const resumen = document.getElementById('resumenFiltro');
+                
+                if (resumen) {
+                    if (this.data.gastos.length === 0) {
+                        resumen.textContent = '';
+                    } else if (hayFiltro) {
+                        resumen.innerHTML = `Mostrando <strong>${filtrados.length}</strong> de ${this.data.gastos.length} movimientos · ` +
+                            `Ingresos <strong style="color:#1B7A3E">${ing.toFixed(2)}€</strong> · ` +
+                            `Gastos <strong style="color:#B3402F">${gas.toFixed(2)}€</strong> · ` +
+                            `Diferencia <strong>${(ing - gas).toFixed(2)}€</strong>`;
                     } else {
-                        saldoAcumulado -= g.importe;
+                        resumen.innerHTML = `<strong>${this.data.gastos.length}</strong> movimientos · ` +
+                            `Ingresos <strong style="color:#1B7A3E">${ing.toFixed(2)}€</strong> · ` +
+                            `Gastos <strong style="color:#B3402F">${gas.toFixed(2)}€</strong>`;
                     }
-                    
-                    const colorSaldo = saldoAcumulado >= 0 ? '#28a745' : '#dc3545';
-                    
+                }
+                
+                // Avisar si una fecha está a medio escribir
+                [['fDesde', desdeT], ['fHasta', hastaT]].forEach(([id, txt]) => {
+                    const el = document.getElementById(id);
+                    if (el) el.style.borderColor = (txt && !this.fechaValida(txt)) ? '#B3402F' : '';
+                });
+                
+                // 5. Pintar
+                if (filtrados.length === 0) {
+                    list.innerHTML = `<tr><td colspan="6" style="text-align:center;color:#6A727A;padding:22px">` +
+                        (this.data.gastos.length === 0
+                            ? 'Todavía no hay movimientos. Añade el primero arriba.'
+                            : 'Ningún movimiento coincide con los filtros.') + `</td></tr>`;
+                    return;
+                }
+                
+                list.innerHTML = filtrados.map(g => {
+                    const saldo = saldoDe[g.id];
+                    const esIngreso = g.tipo === 'ingreso';
+                    const color = esIngreso ? '#1B7A3E' : '#B3402F';
                     return `
                         <tr>
-                            <td>${g.fecha}</td>
-                            <td>${g.concepto}</td>
-                            <td style="color: ${g.tipo === 'gasto' ? '#dc3545' : '#28a745'}; font-weight: bold;">${g.tipo}</td>
-                            <td style="color: ${g.tipo === 'gasto' ? '#dc3545' : '#28a745'}; font-weight: bold;">${g.importe.toFixed(2)}€</td>
-                            <td style="color: ${colorSaldo}; font-weight: bold;">${saldoAcumulado.toFixed(2)}€</td>
+                            <td>${this.escapar(g.fecha)}</td>
+                            <td>${this.escapar(g.concepto)}</td>
+                            <td style="color:${color};font-weight:bold">${g.tipo}</td>
+                            <td style="color:${color};font-weight:bold">${g.importe.toFixed(2)}€</td>
+                            <td style="color:${saldo >= 0 ? '#1B7A3E' : '#B3402F'};font-weight:bold">${saldo.toFixed(2)}€</td>
                             <td>
                                 <button class="btn-small" onclick="app.editarGasto(${g.id})">✏️ Editar</button>
                                 <button class="btn-small btn-delete" onclick="app.deleteGasto(${g.id})">🗑️ Eliminar</button>
