@@ -246,6 +246,25 @@
         th.orden:hover { background: #E4E9ED; }
         th.orden span { color: var(--azulejo); font-size: 11px; }
 
+        /* ---------- CABECERA FIJA AL BAJAR ---------- */
+        .cabecera-fija {
+            position: sticky; top: 0; z-index: 60;
+            margin-left: -4px; margin-right: -4px; padding: 14px 18px;
+            border-bottom: 2px solid var(--azulejo);
+            box-shadow: 0 4px 14px rgba(5,16,33,.18);
+        }
+        .cabecera-fija h1 { font-size: 19px; margin-bottom: 12px; }
+        .cabecera-fija .nav { margin-bottom: 0; }
+        .cabecera-fija .nav button { padding: 8px 12px; font-size: 13px; }
+        /* Las cabeceras de las tablas se quedan justo debajo de la barra */
+        th { position: sticky; top: var(--alto-cabecera, 90px); z-index: 30; }
+        th.orden { z-index: 31; }
+        @media (max-width: 560px) {
+            .cabecera-fija h1 { font-size: 16px; margin-bottom: 10px; }
+            .cabecera-fija .nav { gap: 6px; }
+            .cabecera-fija .nav button { padding: 7px 10px; font-size: 12px; flex: 1 1 auto; }
+        }
+
         /* ---------- IMPRESIÓN: en el papel solo sale el informe ---------- */
         @media print {
             @page { margin: 14mm; }
@@ -255,6 +274,7 @@
             #appScreen > .card:first-child { display: none !important; }
             #informes.section { display: block !important; }
             .card { box-shadow: none !important; padding: 0 !important; margin: 0 !important; border: none !important; }
+            .cabecera-fija, th { position: static !important; box-shadow: none !important; }
             .informe { border: none !important; padding: 0 !important; }
             .informe-tabla { font-size: 11.5px; }
             .informe-tabla thead { display: table-header-group; }
@@ -289,7 +309,7 @@
 
     <!-- APP -->
     <div id="appScreen" class="hidden">
-        <div class="card">
+        <div class="card cabecera-fija" id="cabeceraFija">
             <h1>🏢 Gestión Comunidad de Vecinos</h1>
             <div class="nav">
                 <button onclick="app.showSection('dashboard')">📊 Dashboard</button>
@@ -522,6 +542,11 @@
                     if (e.key === 'Enter') this.login();
                 });
                 document.getElementById('passwordInput').focus();
+                
+                // Si cambia el ancho, la barra puede ocupar más o menos líneas
+                if (typeof window !== 'undefined' && window.addEventListener) {
+                    window.addEventListener('resize', () => this.ajustarCabecera());
+                }
             },
             
             loadData() {
@@ -781,6 +806,17 @@
                 alert(msg);
             },
             
+            ajustarCabecera() {
+                // La barra cambia de alto según el ancho de pantalla (los botones
+                // se reparten en más o menos líneas), así que se mide en vez de suponerla
+                const cab = document.getElementById('cabeceraFija');
+                if (!cab || !document.documentElement || !document.documentElement.style) return;
+                const alto = cab.offsetHeight || 0;
+                if (alto > 0) {
+                    document.documentElement.style.setProperty('--alto-cabecera', alto + 'px');
+                }
+            },
+            
             loginExitoso() {
                 document.getElementById('loginScreen').classList.add('hidden');
                 document.getElementById('appScreen').classList.remove('hidden');
@@ -789,6 +825,7 @@
                 this.renderVecinos();
                 this.renderCuotas();
                 this.renderGastos();
+                this.ajustarCabecera();
                 
                 // Datos de versiones antiguas: avisar nada más entrar
                 const d = this.diagnosticarDatos();
