@@ -423,6 +423,14 @@
             </div>
             <div id="infoBackup" class="stat" style="font-size: 13px;"></div>
 
+            <h2 style="margin-top: 30px;">Revisión de datos</h2>
+            <p style="color: #666; font-size: 13px; margin-bottom: 15px;">
+                Comprueba que las cuotas y los movimientos de Gastos cuadran entre sí, y repara
+                los datos que se metieron con versiones antiguas de la aplicación.
+            </p>
+            <button onclick="app.repararDatos()" style="width: 100%; background: #1B7A3E;">🔧 Revisar y reparar datos</button>
+            <div id="avisoDatos" class="stat" style="font-size: 13px; display: none;"></div>
+
             <h2 style="margin-top: 30px;">Zona peligrosa</h2>
             <button onclick="app.clearAll()" style="background: #dc3545; width: 100%;">🗑️ Borrar todos los datos</button>
         </div>
@@ -526,6 +534,162 @@
                 document.getElementById('loginError').style.display = 'none';
             },
             
+            // ---------- REVISIÓN Y REPARACIÓN DE DATOS ANTIGUOS ----------
+            
+            diagnosticarDatos() {
+                const esEntero = (v) => Number.isInteger(Number(v));
+                const todos = [...this.data.vecinos, ...this.data.cuotas, ...this.data.pagos, ...this.data.gastos];
+                
+                const idsRaros = todos.filter(x => !esEntero(x.id)).length;
+                
+                // Cuotas pagadas que no saben cuál es su ingreso en Gastos
+                const sinEnlace = this.data.cuotas.filter(c => c.estado === 'pagada' && !c.idIngreso).length;
+                
+                // Cuotas pagadas cuyo ingreso enlazado ya no existe
+                const enlaceRoto = this.data.cuotas.filter(c =>
+                    c.estado === 'pagada' && c.idIngreso &&
+                    !this.data.gastos.some(g => g.id === c.idIngreso)).length;
+                
+                // Cuotas de un vecino que ya no existe
+                const huerfanas = this.data.cuotas.filter(c =>
+                    !this.data.vecinos.some(v => v.id === c.vecinoId)).length;
+                
+                return {
+                    idsRaros, sinEnlace, enlaceRoto, huerfanas,
+                    hayProblemas: (idsRaros + sinEnlace + enlaceRoto + huerfanas) > 0
+                };
+            },
+            
+            repararDatos() {
+                const d = this.diagnosticarDatos();
+                
+                if (!d.hayProblemas) {
+                    alert('✓ Todo correcto.\n\nNo se ha encontrado ningún descuadre entre cuotas y gastos.');
+                    return;
+                }
+                
+                let resumen = 'Se han encontrado estos problemas en los datos:\n\n';
+                if (d.idsRaros)   resumen += `• ${d.idsRaros} registro(s) con identificador antiguo\n`;
+                if (d.sinEnlace)  resumen += `• ${d.sinEnlace} cuota(s) pagada(s) sin enlazar con su ingreso\n`;
+                if (d.enlaceRoto) resumen += `• ${d.enlaceRoto} cuota(s) pagada(s) cuyo ingreso ya no existe\n`;
+                if (d.huerfanas)  resumen += `• ${d.huerfanas} cuota(s) de un vecino que ya no está\n`;
+                resumen += '\n¿Quieres que intente repararlos?';
+                
+                if (!confirm(resumen)) return;
+                
+                if (confirm('Antes de reparar, ¿descargas una copia de seguridad por si acaso?')) {
+                    this.exportData();
+                }
+                
+                const hecho = { ids: 0, enlazadas: 0, revertidas: 0, huerfanas: 0 };
+                
+                // --- 1. Poner todos los identificadores en enteros ---
+                const esEntero = (v) => Number.isInteger(Number(v));
+                const hayRaros = [...this.data.vecinos, ...this.data.cuotas, ...this.data.pagos, ...this.data.gastos]
+                    .some(x => !esEntero(x.id));
+                
+                if (hayRaros) {
+                    const mapa = (lista) => {
+                        const m = {};
+                        lista.forEach(x => { m[String(x.id)] = this.nuevoId(); });
+                        return m;
+                    };
+                    const mV = mapa(this.data.vecinos);
+                    const mC = mapa(this.data.cuotas);
+                    const mP = mapa(this.data.pagos);
+                    const mG = mapa(this.data.gastos);
+                    const trad = (m, v) => (v != null && m[String(v)] != null) ? m[String(v)] : v;
+                    
+                    // Se traduce leyendo siempre los valores antiguos
+                    this.data.cuotas.forEach(c => {
+                        c.vecinoId  = trad(mV, c.vecinoId);
+                        c.idPago    = trad(mP, c.idPago);
+                        c.idIngreso = trad(mG, c.idIngreso);
+                        c.id        = trad(mC, c.id);
+                    });
+                    this.data.pagos.forEach(p => {
+                        p.cuotaId = trad(mC, p.cuotaId);
+                        p.id      = trad(mP, p.id);
+                    });
+                    this.data.vecinos.forEach(v => { v.id = trad(mV, v.id); });
+                    this.data.gastos.forEach(g => { g.id = trad(mG, g.id); });
+                    hecho.ids = d.idsRaros;
+                }
+                
+                // --- 2. Volver a enlazar cada cuota pagada con su ingreso ---
+                const yaUsados = new Set(this.data.cuotas.map(c => c.idIngreso).filter(x => x != null));
+                
+                this.data.cuotas.forEach(c => {
+                    if (c.estado !== 'pagada') return;
+                    const ingresoVive = c.idIngreso && this.data.gastos.some(g => g.id === c.idIngreso);
+                    if (ingresoVive) return;
+                    
+                    if (c.idIngreso) yaUsados.delete(c.idIngreso);
+                    
+                    const v = this.data.vecinos.find(x => x.id === c.vecinoId);
+                    const pago = this.data.pagos.find(p => p.id === c.idPago)
+                              || this.data.pagos.find(p => p.cuotaId === c.id);
+                    
+                    // Buscar en Gastos el ingreso que corresponde a este pago
+                    const candidatos = this.data.gastos.filter(g =>
+                        g.tipo === 'ingreso' &&
+                        !yaUsados.has(g.id) &&
+                        Math.abs(g.importe - c.importe) < 0.005 &&
+                        String(g.concepto).startsWith('Pago cuota') &&
+                        (!v || String(g.concepto).includes(v.nombre)) &&
+                        String(g.concepto).includes(c.concepto)
+                    );
+                    // Si sabemos la fecha del pago, la usamos para afinar
+                    const elegido = (pago && candidatos.find(g => g.fecha === pago.fecha)) || candidatos[0];
+                    
+                    if (elegido) {
+                        c.idIngreso = elegido.id;
+                        yaUsados.add(elegido.id);
+                        if (!pago) {
+                            const nuevoPago = { id: this.nuevoId(), cuotaId: c.id, importe: c.importe, fecha: elegido.fecha };
+                            this.data.pagos.push(nuevoPago);
+                            c.idPago = nuevoPago.id;
+                        } else {
+                            c.idPago = pago.id;
+                        }
+                        hecho.enlazadas++;
+                    } else {
+                        // No hay ningún ingreso que respalde esta cuota: vuelve a pendiente
+                        if (pago) this.data.pagos = this.data.pagos.filter(p => p.id !== pago.id);
+                        c.estado = 'pendiente';
+                        delete c.idPago;
+                        delete c.idIngreso;
+                        hecho.revertidas++;
+                    }
+                });
+                
+                // --- 3. Cuotas de vecinos que ya no existen ---
+                const sinDueno = this.data.cuotas.filter(c => !this.data.vecinos.some(v => v.id === c.vecinoId));
+                if (sinDueno.length && confirm(`Hay ${sinDueno.length} cuota(s) de vecinos que ya no están dados de alta.\n\n¿Eliminarlas junto con sus pagos e ingresos?`)) {
+                    sinDueno.forEach(c => {
+                        if (c.idPago)    this.data.pagos  = this.data.pagos.filter(p => p.id !== c.idPago);
+                        if (c.idIngreso) this.data.gastos = this.data.gastos.filter(g => g.id !== c.idIngreso);
+                    });
+                    const ids = new Set(sinDueno.map(c => c.id));
+                    this.data.cuotas = this.data.cuotas.filter(c => !ids.has(c.id));
+                    hecho.huerfanas = sinDueno.length;
+                }
+                
+                this.saveData();
+                this.renderVecinos();
+                this.renderCuotas();
+                this.renderGastos();
+                this.updateDashboard();
+                
+                let msg = '✓ Reparación terminada\n\n';
+                if (hecho.ids)        msg += `• ${hecho.ids} identificador(es) puestos al día\n`;
+                if (hecho.enlazadas)  msg += `• ${hecho.enlazadas} cuota(s) reconectadas con su ingreso\n`;
+                if (hecho.revertidas) msg += `• ${hecho.revertidas} cuota(s) devueltas a Pendiente (no había ingreso que las respaldara)\n`;
+                if (hecho.huerfanas)  msg += `• ${hecho.huerfanas} cuota(s) sin vecino eliminadas\n`;
+                msg += '\nRevisa el Dashboard para comprobar que el saldo cuadra.';
+                alert(msg);
+            },
+            
             loginExitoso() {
                 document.getElementById('loginScreen').classList.add('hidden');
                 document.getElementById('appScreen').classList.remove('hidden');
@@ -534,6 +698,16 @@
                 this.renderVecinos();
                 this.renderCuotas();
                 this.renderGastos();
+                
+                // Datos de versiones antiguas: avisar nada más entrar
+                const d = this.diagnosticarDatos();
+                if (d.hayProblemas) {
+                    setTimeout(() => {
+                        alert('⚠️ Hay descuadres entre las cuotas y los movimientos de Gastos.\n\n' +
+                              'Suele pasar con datos metidos en versiones anteriores de la aplicación.\n\n' +
+                              'Ve a ⚙️ Config y pulsa "Revisar y reparar datos".');
+                    }, 400);
+                }
             },
             
             logout() {
@@ -557,6 +731,15 @@
                 if (name === 'config') {
                     document.getElementById('configSaldoInicial').value = (this.data.saldoInicial || 0).toFixed(2);
                     this.mostrarInfoBackup();
+                    const aviso = document.getElementById('avisoDatos');
+                    const d = this.diagnosticarDatos();
+                    if (d.hayProblemas) {
+                        aviso.textContent = '⚠️ Se han detectado descuadres en los datos. Pulsa el botón de arriba para repararlos.';
+                        aviso.style.background = '#fff3cd';
+                        aviso.style.display = 'block';
+                    } else {
+                        aviso.style.display = 'none';
+                    }
                 }
             },
             
