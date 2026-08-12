@@ -349,12 +349,16 @@
                 <input type="text" id="vecinoTel" placeholder="Teléfono">
             </div>
             <div class="form-group">
-                <label>Email</label>
-                <input type="email" id="vecinoEmail" placeholder="Email">
+                <label>Segundo contacto (nombre)</label>
+                <input type="text" id="vecinoContacto" placeholder="Pareja, familiar, inquilino…">
+            </div>
+            <div class="form-group">
+                <label>Teléfono del segundo contacto</label>
+                <input type="text" id="vecinoContactoTel" placeholder="Teléfono">
             </div>
             <button onclick="app.addVecino()" style="width: 100%; margin-bottom: 20px;">Agregar Vecino</button>
             <table>
-                <thead><tr><th>Nombre</th><th>Piso</th><th>Teléfono</th><th>Email</th><th>Acciones</th></tr></thead>
+                <thead><tr><th>Nombre</th><th>Piso</th><th>Teléfono</th><th>Segundo contacto</th><th>Acciones</th></tr></thead>
                 <tbody id="vecinosList"></tbody>
             </table>
         </div>
@@ -655,9 +659,12 @@
                     if (g && Math.abs(g.importe - c.importe) >= 0.005) importeDistinto++;
                 });
                 
+                // Vecinos con email de versiones antiguas (ese campo ya no existe)
+                const emailsViejos = this.data.vecinos.filter(v => v.email && !v.contacto && !v.contactoTel).length;
+                
                 return {
-                    idsRaros, sinEnlace, enlaceRoto, huerfanas, compartidos, importeDistinto,
-                    hayProblemas: (idsRaros + sinEnlace + enlaceRoto + huerfanas + compartidos + importeDistinto) > 0
+                    idsRaros, sinEnlace, enlaceRoto, huerfanas, compartidos, importeDistinto, emailsViejos,
+                    hayProblemas: (idsRaros + sinEnlace + enlaceRoto + huerfanas + compartidos + importeDistinto + emailsViejos) > 0
                 };
             },
             
@@ -676,6 +683,7 @@
                 if (d.compartidos) resumen += `• ${d.compartidos} cuota(s) que comparten el mismo ingreso (parecen cobradas pero el dinero solo entró una vez)\n`;
                 if (d.importeDistinto) resumen += `• ${d.importeDistinto} cuota(s) cuyo importe no coincide con el ingreso cobrado\n`;
                 if (d.huerfanas)  resumen += `• ${d.huerfanas} cuota(s) de un vecino que ya no está\n`;
+                if (d.emailsViejos) resumen += `• ${d.emailsViejos} vecino(s) con email antiguo, se pasará al segundo contacto\n`;
                 resumen += '\n¿Quieres que intente repararlos?';
                 
                 if (!confirm(resumen)) return;
@@ -684,7 +692,17 @@
                     this.exportData();
                 }
                 
-                const hecho = { ids: 0, enlazadas: 0, revertidas: 0, huerfanas: 0, compartidos: 0 };
+                const hecho = { ids: 0, enlazadas: 0, revertidas: 0, huerfanas: 0, compartidos: 0, emails: 0 };
+                
+                // --- 0. Vecinos de versiones antiguas: el email pasa al segundo
+                //     contacto, para no perder el dato al haber quitado ese campo ---
+                this.data.vecinos.forEach(v => {
+                    if (v.email && !v.contacto && !v.contactoTel) {
+                        v.contacto = v.email;
+                        delete v.email;
+                        hecho.emails++;
+                    }
+                });
                 
                 // --- 1. Poner todos los identificadores en enteros ---
                 const esEntero = (v) => Number.isInteger(Number(v));
@@ -802,6 +820,7 @@
                 if (hecho.compartidos) msg += `• ${hecho.compartidos} cuota(s) que compartían un mismo cobro, separadas\n`;
                 if (hecho.revertidas) msg += `• ${hecho.revertidas} cuota(s) devueltas a Pendiente (no había ingreso que las respaldara)\n`;
                 if (hecho.huerfanas)  msg += `• ${hecho.huerfanas} cuota(s) sin vecino eliminadas\n`;
+                if (hecho.emails)     msg += `• ${hecho.emails} email(s) antiguos trasladados al segundo contacto\n`;
                 msg += '\nRevisa el Dashboard para comprobar que el saldo cuadra.';
                 alert(msg);
             },
@@ -903,7 +922,8 @@
                 const nombre = document.getElementById('vecinoNombre').value.trim();
                 const piso = document.getElementById('vecinoPiso').value.trim();
                 const tel = document.getElementById('vecinoTel').value.trim();
-                const email = document.getElementById('vecinoEmail').value.trim();
+                const contacto = document.getElementById('vecinoContacto').value.trim();
+                const contactoTel = document.getElementById('vecinoContactoTel').value.trim();
                 
                 if (!nombre || !piso) {
                     alert('Completa nombre y piso');
@@ -912,38 +932,50 @@
                 
                 this.data.vecinos.push({
                     id: this.nuevoId(),
-                    nombre, piso, tel, email,
+                    nombre, piso, tel, contacto, contactoTel,
                     fecha: new Date().toLocaleDateString('es-ES')
                 });
                 
                 this.saveData();
-                document.getElementById('vecinoNombre').value = '';
-                document.getElementById('vecinoPiso').value = '';
-                document.getElementById('vecinoTel').value = '';
-                document.getElementById('vecinoEmail').value = '';
+                ['vecinoNombre','vecinoPiso','vecinoTel','vecinoContacto','vecinoContactoTel']
+                    .forEach(id => document.getElementById(id).value = '');
                 this.renderVecinos();
+                this.updateDashboard();
             },
             
             renderVecinos() {
                 const list = document.getElementById('vecinosList');
-                // Ordenar por fecha de alta (más antiguos primero)
-                const vecinosOrdenados = [...this.data.vecinos].sort((a, b) => {
-                    const fechaA = new Date(a.fecha || '1900-01-01');
-                    const fechaB = new Date(b.fecha || '1900-01-01');
-                    return fechaA - fechaB;
-                });
-                list.innerHTML = vecinosOrdenados.map(v => `
+                // Ordenar por fecha de alta (más antiguos primero).
+                // Ojo: las fechas son dd/mm/yyyy, hay que convertirlas a mano
+                // porque new Date() las lee al revés (mes/día) y falla
+                const vecinosOrdenados = [...this.data.vecinos].sort((a, b) =>
+                    this.convertirFechaParaOrdenar(a.fecha) - this.convertirFechaParaOrdenar(b.fecha));
+                
+                if (vecinosOrdenados.length === 0) {
+                    list.innerHTML = `<tr><td colspan="5" style="text-align:center;color:#6A727A;padding:22px">
+                        Todavía no hay vecinos. Añade el primero arriba.</td></tr>`;
+                    return;
+                }
+                
+                list.innerHTML = vecinosOrdenados.map(v => {
+                    // El segundo contacto: nombre y teléfono en la misma celda
+                    let segundo = '-';
+                    if (v.contacto || v.contactoTel) {
+                        segundo = this.escapar(v.contacto || 'Sin nombre');
+                        if (v.contactoTel) segundo += `<br><span style="color:#6A727A">${this.escapar(v.contactoTel)}</span>`;
+                    }
+                    return `
                     <tr>
-                        <td>${v.nombre}</td>
-                        <td>${v.piso}</td>
-                        <td>${v.tel || '-'}</td>
-                        <td>${v.email || '-'}</td>
+                        <td>${this.escapar(v.nombre)}</td>
+                        <td>${this.escapar(v.piso)}</td>
+                        <td>${this.escapar(v.tel) || '-'}</td>
+                        <td>${segundo}</td>
                         <td>
                             <button class="btn-small" onclick="app.editarVecino(${v.id})">✏️ Editar</button>
                             <button class="btn-small btn-delete" onclick="app.deleteVecino(${v.id})">🗑️ Eliminar</button>
                         </td>
-                    </tr>
-                `).join('');
+                    </tr>`;
+                }).join('');
             },
             
             editarVecino(id) {
@@ -959,8 +991,11 @@
                 const tel = prompt('Teléfono:', v.tel || '');
                 if (tel === null) return;
                 
-                const email = prompt('Email:', v.email || '');
-                if (email === null) return;
+                const contacto = prompt('Segundo contacto (nombre):', v.contacto || '');
+                if (contacto === null) return;
+                
+                const contactoTel = prompt('Teléfono del segundo contacto:', v.contactoTel || '');
+                if (contactoTel === null) return;
                 
                 if (!nombre.trim() || !piso.trim()) {
                     alert('El nombre y el piso son obligatorios');
@@ -970,7 +1005,8 @@
                 v.nombre = nombre.trim();
                 v.piso = piso.trim();
                 v.tel = tel.trim();
-                v.email = email.trim();
+                v.contacto = contacto.trim();
+                v.contactoTel = contactoTel.trim();
                 
                 this.saveData();
                 this.renderVecinos();
@@ -1310,10 +1346,6 @@
             ${vecino.tel ? `<div class="field">
                 <span class="label">Teléfono:</span>
                 <span class="value">${vecino.tel}</span>
-            </div>` : ''}
-            ${vecino.email ? `<div class="field">
-                <span class="label">Email:</span>
-                <span class="value">${vecino.email}</span>
             </div>` : ''}
         </div>
         
@@ -1775,7 +1807,9 @@
                         <div><span>Vecino</span><strong>${this.escapar(v.nombre)}</strong></div>
                         <div><span>Piso</span><strong>${this.escapar(v.piso)}</strong></div>
                         ${v.tel ? `<div><span>Teléfono</span><strong>${this.escapar(v.tel)}</strong></div>` : ''}
-                        ${v.email ? `<div><span>Email</span><strong>${this.escapar(v.email)}</strong></div>` : ''}
+                        ${v.contacto || v.contactoTel
+                            ? `<div><span>Segundo contacto</span><strong>${this.escapar(v.contacto || '—')}${v.contactoTel ? ' · ' + this.escapar(v.contactoTel) : ''}</strong></div>`
+                            : ''}
                     </div>
                     
                     <div class="informe-totales">
