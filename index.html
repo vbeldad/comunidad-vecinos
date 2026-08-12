@@ -612,9 +612,27 @@
                 const huerfanas = this.data.cuotas.filter(c =>
                     !this.data.vecinos.some(v => v.id === c.vecinoId)).length;
                 
+                // Dos o más cuotas apuntando al MISMO ingreso: parecen pagadas
+                // las dos, pero solo hay un cobro en la caja
+                const vistos = {};
+                let compartidos = 0;
+                this.data.cuotas.forEach(c => {
+                    if (c.estado !== 'pagada' || !c.idIngreso) return;
+                    if (vistos[c.idIngreso]) compartidos++;
+                    else vistos[c.idIngreso] = true;
+                });
+                
+                // Cuota pagada cuyo ingreso tiene otro importe distinto
+                let importeDistinto = 0;
+                this.data.cuotas.forEach(c => {
+                    if (c.estado !== 'pagada' || !c.idIngreso) return;
+                    const g = this.data.gastos.find(x => x.id === c.idIngreso);
+                    if (g && Math.abs(g.importe - c.importe) >= 0.005) importeDistinto++;
+                });
+                
                 return {
-                    idsRaros, sinEnlace, enlaceRoto, huerfanas,
-                    hayProblemas: (idsRaros + sinEnlace + enlaceRoto + huerfanas) > 0
+                    idsRaros, sinEnlace, enlaceRoto, huerfanas, compartidos, importeDistinto,
+                    hayProblemas: (idsRaros + sinEnlace + enlaceRoto + huerfanas + compartidos + importeDistinto) > 0
                 };
             },
             
@@ -630,6 +648,8 @@
                 if (d.idsRaros)   resumen += `• ${d.idsRaros} registro(s) con identificador antiguo\n`;
                 if (d.sinEnlace)  resumen += `• ${d.sinEnlace} cuota(s) pagada(s) sin enlazar con su ingreso\n`;
                 if (d.enlaceRoto) resumen += `• ${d.enlaceRoto} cuota(s) pagada(s) cuyo ingreso ya no existe\n`;
+                if (d.compartidos) resumen += `• ${d.compartidos} cuota(s) que comparten el mismo ingreso (parecen cobradas pero el dinero solo entró una vez)\n`;
+                if (d.importeDistinto) resumen += `• ${d.importeDistinto} cuota(s) cuyo importe no coincide con el ingreso cobrado\n`;
                 if (d.huerfanas)  resumen += `• ${d.huerfanas} cuota(s) de un vecino que ya no está\n`;
                 resumen += '\n¿Quieres que intente repararlos?';
                 
@@ -639,7 +659,7 @@
                     this.exportData();
                 }
                 
-                const hecho = { ids: 0, enlazadas: 0, revertidas: 0, huerfanas: 0 };
+                const hecho = { ids: 0, enlazadas: 0, revertidas: 0, huerfanas: 0, compartidos: 0 };
                 
                 // --- 1. Poner todos los identificadores en enteros ---
                 const esEntero = (v) => Number.isInteger(Number(v));
@@ -675,7 +695,19 @@
                 }
                 
                 // --- 2. Volver a enlazar cada cuota pagada con su ingreso ---
-                const yaUsados = new Set(this.data.cuotas.map(c => c.idIngreso).filter(x => x != null));
+                const yaUsados = new Set();
+                
+                // Si dos cuotas apuntan al mismo ingreso, solo la primera se lo queda;
+                // las demás se quedan sin enlace y se reprocesan más abajo
+                this.data.cuotas.forEach(c => {
+                    if (c.estado !== 'pagada' || !c.idIngreso) return;
+                    if (yaUsados.has(c.idIngreso)) {
+                        delete c.idIngreso;
+                        hecho.compartidos++;
+                    } else {
+                        yaUsados.add(c.idIngreso);
+                    }
+                });
                 
                 this.data.cuotas.forEach(c => {
                     if (c.estado !== 'pagada') return;
@@ -742,6 +774,7 @@
                 let msg = '✓ Reparación terminada\n\n';
                 if (hecho.ids)        msg += `• ${hecho.ids} identificador(es) puestos al día\n`;
                 if (hecho.enlazadas)  msg += `• ${hecho.enlazadas} cuota(s) reconectadas con su ingreso\n`;
+                if (hecho.compartidos) msg += `• ${hecho.compartidos} cuota(s) que compartían un mismo cobro, separadas\n`;
                 if (hecho.revertidas) msg += `• ${hecho.revertidas} cuota(s) devueltas a Pendiente (no había ingreso que las respaldara)\n`;
                 if (hecho.huerfanas)  msg += `• ${hecho.huerfanas} cuota(s) sin vecino eliminadas\n`;
                 msg += '\nRevisa el Dashboard para comprobar que el saldo cuadra.';
@@ -1779,6 +1812,14 @@
                 const totalDebe = porVecino.reduce((a, x) => a + x.debe, 0);
                 const morosos = porVecino.filter(x => x.debe > 0);
                 
+                // CUADRE: lo que dicen las cuotas cobradas frente al dinero que
+                // realmente entró por cuotas. Si no coincide, hay un descuadre.
+                const pagadoSegunCuotas = porVecino.reduce((a, x) => a + x.pagado, 0);
+                const cobradoEnCaja = movs
+                    .filter(g => g.tipo === 'ingreso' && String(g.concepto).startsWith('Pago cuota'))
+                    .reduce((a, g) => a + g.importe, 0);
+                const descuadre = pagadoSegunCuotas - cobradoEnCaja;
+                
                 const filasVecinos = porVecino.map(x => `<tr>
                         <td>${this.escapar(x.v.nombre)}</td>
                         <td>${this.escapar(x.v.piso)}</td>
@@ -1820,6 +1861,14 @@
                             <thead><tr><th>Vecino</th><th>Piso</th><th style="text-align:right">Cuotas</th><th style="text-align:right">Pagado</th><th style="text-align:right">Pendiente</th></tr></thead>
                             <tbody>${filasVecinos}</tbody>
                           </table>`}
+                    
+                    ${Math.abs(descuadre) >= 0.005
+                        ? `<p class="informe-aviso"><strong>Atención: las cuentas no cuadran.</strong><br>
+                           Las cuotas marcadas como cobradas suman ${pagadoSegunCuotas.toFixed(2)}€, pero por cuotas
+                           solo han entrado ${cobradoEnCaja.toFixed(2)}€ en la caja
+                           (faltan ${Math.abs(descuadre).toFixed(2)}€).<br>
+                           Ve a Config y pulsa «Revisar y reparar datos».</p>`
+                        : ''}
                     
                     ${totalDebe > 0
                         ? `<p class="informe-aviso">Quedan ${totalDebe.toFixed(2)}€ por cobrar, repartidos entre ${morosos.length} vecino(s).</p>`
