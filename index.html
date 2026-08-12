@@ -783,10 +783,24 @@
                     return;
                 }
                 
-                // Guardar cambios
+                // Guardar cambios en la cuota
                 c.mes = mesTrimmed;
                 c.importe = importeNum;
                 c.concepto = nuevoConcepto.trim();
+                
+                // Si ya estaba pagada, arrastrar el cambio al pago y al ingreso
+                // para que Gastos y Cuotas no queden descuadrados
+                if (c.estado === 'pagada') {
+                    const pago = this.data.pagos.find(p => p.id === c.idPago);
+                    if (pago) pago.importe = c.importe;
+                    
+                    const ingreso = this.data.gastos.find(g => g.id === c.idIngreso);
+                    if (ingreso) {
+                        const v = this.data.vecinos.find(x => x.id === c.vecinoId);
+                        ingreso.importe = c.importe;
+                        ingreso.concepto = `Pago cuota - ${v ? v.nombre : 'N/A'} (${c.concepto})`;
+                    }
+                }
                 
                 this.saveData();
                 this.renderCuotas();
@@ -1173,6 +1187,17 @@
             
             editarGasto(id) {
                 const g = this.data.gastos.find(x => x.id === id);
+                if (!g) return;
+                
+                // Los ingresos que vienen de una cuota se editan desde Cuotas,
+                // si no, el importe de aquí y el de la cuota dejarían de coincidir
+                const cuotaLigada = this.data.cuotas.find(c => c.idIngreso === id);
+                if (cuotaLigada) {
+                    alert('Este ingreso viene del pago de una cuota.\n\n' +
+                          'Para cambiarlo, ve a 💳 Cuotas y edita la cuota de ' + cuotaLigada.mes + '.\n' +
+                          'Así el importe se actualiza en los dos sitios a la vez.');
+                    return;
+                }
                 
                 const fecha = prompt('Fecha (dd/mm/yyyy):', g.fecha);
                 if (fecha === null) return;
@@ -1209,15 +1234,39 @@
                 
                 this.saveData();
                 this.renderGastos();
+                this.updateDashboard();
                 alert('✓ Gasto editado');
             },
             
             deleteGasto(id) {
-                if (confirm('¿Eliminar?')) {
-                    this.data.gastos = this.data.gastos.filter(g => g.id !== id);
-                    this.saveData();
-                    this.renderGastos();
+                const g = this.data.gastos.find(x => x.id === id);
+                if (!g) return;
+                
+                // ¿Este movimiento es el ingreso automático de una cuota pagada?
+                const cuotaLigada = this.data.cuotas.find(c => c.idIngreso === id);
+                
+                if (cuotaLigada) {
+                    const v = this.data.vecinos.find(x => x.id === cuotaLigada.vecinoId);
+                    const aviso = `Este ingreso viene del pago de una cuota:\n\n` +
+                        `${v ? v.nombre : 'Vecino'} · ${cuotaLigada.mes} · ${cuotaLigada.importe.toFixed(2)}€\n\n` +
+                        `Si lo borras, esa cuota volverá a quedar PENDIENTE de pago.\n\n¿Continuar?`;
+                    if (!confirm(aviso)) return;
+                    
+                    // Deshacer el pago entero, para no dejar una cuota "pagada" sin dinero
+                    this.data.pagos = this.data.pagos.filter(p => p.id !== cuotaLigada.idPago);
+                    cuotaLigada.estado = 'pendiente';
+                    delete cuotaLigada.idPago;
+                    delete cuotaLigada.idIngreso;
+                } else {
+                    if (!confirm('¿Eliminar este movimiento?')) return;
                 }
+                
+                this.data.gastos = this.data.gastos.filter(x => x.id !== id);
+                this.saveData();
+                this.renderGastos();
+                this.renderCuotas();
+                this.updateDashboard();
+                if (cuotaLigada) alert('✓ Ingreso eliminado. La cuota ha vuelto a Pendiente.');
             },
             
             // ---------- INFORMES ----------
