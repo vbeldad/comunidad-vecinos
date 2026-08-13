@@ -265,11 +265,45 @@
             .cabecera-fija .nav button { padding: 7px 10px; font-size: 12px; flex: 1 1 auto; }
         }
 
+        /* ---------- NOTA PRIVADA ---------- */
+        .btn-nota { background: #fff; color: #5C646C; border: 1px solid #C6CBD1; }
+        .btn-nota:hover { background: #E9EDF0; color: var(--pizarra); }
+        .btn-nota.con-nota {
+            background: #FBF6EA; border-color: var(--laton); color: #6B4C10; font-weight: 700;
+        }
+        .btn-nota.con-nota:hover { background: #F4E9CF; }
+        .fondo-modal {
+            position: fixed; inset: 0; z-index: 200;
+            display: flex; align-items: center; justify-content: center; padding: 20px;
+            background: rgba(9,20,38,.55);
+        }
+        .fondo-modal .modal {
+            width: 100%; max-width: 480px; background: #fff;
+            border-radius: 10px; padding: 22px;
+            box-shadow: 0 18px 45px rgba(5,16,33,.4);
+        }
+        .modal h3 {
+            font-family: 'Bricolage Grotesque', sans-serif; font-size: 18px;
+            color: var(--azulejo); margin-bottom: 8px;
+        }
+        .modal-aviso {
+            font-size: 12.5px; color: #5C646C; background: #F4F6F8;
+            padding: 9px 11px; border-radius: 6px; margin-bottom: 14px;
+        }
+        .modal textarea {
+            width: 100%; padding: 11px; font-family: inherit; font-size: 14px;
+            line-height: 1.5; resize: vertical; border: 1px solid #C6CBD1; border-radius: 6px;
+        }
+        .modal textarea:focus { outline: none; border-color: var(--laton); box-shadow: 0 0 0 3px rgba(192,138,46,.25); }
+        .modal-botones { display: flex; gap: 9px; justify-content: flex-end; margin-top: 15px; flex-wrap: wrap; }
+        .btn-secundario { background: #fff; color: #5C646C; border: 1px solid #C6CBD1; }
+        .btn-secundario:hover { background: #E9EDF0; color: var(--pizarra); }
+
         /* ---------- IMPRESIÓN: en el papel solo sale el informe ---------- */
         @media print {
             @page { margin: 14mm; }
             body { background: #fff !important; padding: 0 !important; }
-            #loginScreen, .nav, .btn-imprimir, #informes > h2,
+            #loginScreen, .nav, .btn-imprimir, #informes > h2, .fondo-modal,
             #informes > p, #informes .form-group, #informes > button,
             #appScreen > .card:first-child { display: none !important; }
             #informes.section { display: block !important; }
@@ -518,6 +552,20 @@
         </div>
     </div>
 
+    <!-- VENTANA DE NOTA PRIVADA -->
+    <div id="fondoNota" class="fondo-modal hidden" onclick="app.cerrarNota(event)">
+        <div class="modal" onclick="event.stopPropagation()">
+            <h3 id="tituloNota">Nota</h3>
+            <p class="modal-aviso">🔒 Solo la ves tú aquí. No aparece en informes, recibos ni en ningún otro sitio.</p>
+            <textarea id="textoNota" rows="8" placeholder="Anota lo que quieras: acuerdos, avisos, incidencias…"></textarea>
+            <div class="modal-botones">
+                <button class="btn-secundario" onclick="app.cerrarNota()">Cancelar</button>
+                <button class="btn-delete" id="btnBorrarNota" onclick="app.borrarNota()">Borrar nota</button>
+                <button onclick="app.guardarNota()">Guardar</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         const app = {
             data: {
@@ -551,6 +599,11 @@
                 if (typeof window !== 'undefined' && window.addEventListener) {
                     window.addEventListener('resize', () => this.ajustarCabecera());
                 }
+                
+                // Escape cierra la ventana de la nota
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape' && this.notaVecinoId !== null) this.cerrarNota();
+                });
             },
             
             loadData() {
@@ -943,6 +996,52 @@
                 this.updateDashboard();
             },
             
+            // ---------- NOTAS PRIVADAS DE CADA VECINO ----------
+            // Son solo para el administrador: nunca salen en informes ni recibos
+            
+            notaVecinoId: null,
+            
+            abrirNota(id) {
+                const v = this.data.vecinos.find(x => x.id === id);
+                if (!v) { alert('Vecino no encontrado'); return; }
+                
+                this.notaVecinoId = id;
+                document.getElementById('tituloNota').textContent = 'Nota sobre ' + v.nombre;
+                document.getElementById('textoNota').value = v.nota || '';
+                document.getElementById('btnBorrarNota').style.display = (v.nota && v.nota.trim()) ? '' : 'none';
+                document.getElementById('fondoNota').classList.remove('hidden');
+                document.getElementById('textoNota').focus();
+            },
+            
+            guardarNota() {
+                const v = this.data.vecinos.find(x => x.id === this.notaVecinoId);
+                if (!v) { this.cerrarNota(); return; }
+                
+                const texto = document.getElementById('textoNota').value.trim();
+                if (texto) v.nota = texto;
+                else delete v.nota;
+                
+                this.saveData();
+                this.renderVecinos();
+                this.cerrarNota();
+            },
+            
+            borrarNota() {
+                const v = this.data.vecinos.find(x => x.id === this.notaVecinoId);
+                if (!v) { this.cerrarNota(); return; }
+                if (!confirm('¿Borrar la nota de ' + v.nombre + '?')) return;
+                
+                delete v.nota;
+                this.saveData();
+                this.renderVecinos();
+                this.cerrarNota();
+            },
+            
+            cerrarNota() {
+                document.getElementById('fondoNota').classList.add('hidden');
+                this.notaVecinoId = null;
+            },
+            
             renderVecinos() {
                 const list = document.getElementById('vecinosList');
                 // Ordenar por fecha de alta (más antiguos primero).
@@ -964,6 +1063,9 @@
                         segundo = this.escapar(v.contacto || 'Sin nombre');
                         if (v.contactoTel) segundo += `<br><span style="color:#6A727A">${this.escapar(v.contactoTel)}</span>`;
                     }
+                    // Nota privada: solo se ve aquí, nunca en informes ni recibos
+                    const tieneNota = !!(v.nota && v.nota.trim());
+                    const avance = tieneNota ? this.escapar(v.nota.trim().slice(0, 120)) : 'Añadir una nota privada';
                     return `
                     <tr>
                         <td>${this.escapar(v.nombre)}</td>
@@ -971,6 +1073,9 @@
                         <td>${this.escapar(v.tel) || '-'}</td>
                         <td>${segundo}</td>
                         <td>
+                            <button class="btn-small btn-nota${tieneNota ? ' con-nota' : ''}"
+                                    title="${avance}"
+                                    onclick="app.abrirNota(${v.id})">${tieneNota ? '📝 Nota •' : '📝 Nota'}</button>
                             <button class="btn-small" onclick="app.editarVecino(${v.id})">✏️ Editar</button>
                             <button class="btn-small btn-delete" onclick="app.deleteVecino(${v.id})">🗑️ Eliminar</button>
                         </td>
